@@ -1,4 +1,3 @@
-import { MessageRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { checkAndResetCredits } from "@/lib/credits";
@@ -252,6 +251,56 @@ async function deductOneCredit(userId: string, dailyFreeCredits: number) {
   return result.count > 0;
 }
 
+export async function GET(request: Request) {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    return NextResponse.json({ error: "You must be logged in to view this chat." }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const providerName = searchParams.get("providerName");
+
+  if (!isChatProviderName(providerName)) {
+    return NextResponse.json({ error: "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar." }, { status: 400 });
+  }
+
+  const [credits, messages] = await Promise.all([
+    checkAndResetCredits(session.userId),
+    prisma.message.findMany({
+      where: {
+        userId: session.userId,
+        providerName,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      select: {
+        id: true,
+        role: true,
+        content: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  if (!credits) {
+    return NextResponse.json({ error: "User was not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    providerName,
+    messages: messages.map((message: { id: string; role: "user" | "assistant"; content: string; createdAt: Date }) => ({
+      ...message,
+      createdAt: message.createdAt.toISOString(),
+    })),
+    credits: {
+      dailyFreeCredits: credits.dailyFreeCredits,
+      purchasedCredits: credits.purchasedCredits,
+    },
+  });
+}
+
 export async function POST(request: Request) {
   const session = await getCurrentSession();
 
@@ -319,7 +368,7 @@ export async function POST(request: Request) {
   const config = PROVIDERS[providerName];
   const systemPrompt = buildSystemPrompt(config, profile);
   const conversationMessages = [
-    ...previousMessages.reverse().map((previousMessage) => ({
+    ...previousMessages.reverse().map((previousMessage: { role: "user" | "assistant"; content: string }) => ({
       role: previousMessage.role,
       content: previousMessage.content,
     })),
@@ -341,13 +390,13 @@ export async function POST(request: Request) {
       {
         userId: session.userId,
         providerName,
-        role: MessageRole.user,
+        role: "user",
         content: message,
       },
       {
         userId: session.userId,
         providerName,
-        role: MessageRole.assistant,
+        role: "assistant",
         content: reply,
       },
     ],
