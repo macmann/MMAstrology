@@ -18,15 +18,15 @@ enum MessageRole {
 }
 
 model User {
-  id                  String                @id @default(cuid())
-  email               String                @unique
+  id                  String               @id @default(cuid())
+  email               String               @unique
   passwordHash        String
-  role                Role                  @default(USER)
-  dailyFreeCredits    Int                   @default(4)
-  purchasedCredits    Int                   @default(0)
-  lastCreditReset     DateTime              @default(now())
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
+  role                Role                 @default(USER)
+  dailyFreeCredits    Int                  @default(4)
+  purchasedCredits    Int                  @default(0)
+  lastCreditReset     DateTime             @default(now())
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   astrologicalProfile AstrologicalProfile?
   creditTransactions  CreditTransaction[]
   messages            Message[]
@@ -65,9 +65,10 @@ model Message {
 }
 
 model ProviderConfig {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String   @unique
+  isActive     Boolean  @default(true)
+  systemPrompt String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

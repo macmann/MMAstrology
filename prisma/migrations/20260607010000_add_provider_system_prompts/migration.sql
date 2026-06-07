@@ -1,0 +1,1 @@
+ALTER TABLE "ProviderConfig" ADD COLUMN "systemPrompt" TEXT NOT NULL DEFAULT 'You are {personaName}, an expert astrologer. Tone: {tone}. The user was born on {dob} at {birthTime} in {birthLocation}. Use this to answer their questions.';

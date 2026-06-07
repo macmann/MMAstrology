@@ -12,7 +12,7 @@ type ChatMessage = {
   content: string;
 };
 
-type ProviderConfig = {
+type LlmProviderConfig = {
   personaName: ChatProviderName;
   tone: string;
   envKey: string;
@@ -20,7 +20,15 @@ type ProviderConfig = {
   defaultModel: string;
 };
 
-const PROVIDERS: Record<ChatProviderName, ProviderConfig> = {
+type EditableProviderConfig = {
+  isActive: boolean;
+  systemPrompt: string;
+};
+
+const DEFAULT_SYSTEM_PROMPT =
+  "You are {personaName}, an expert astrologer. Tone: {tone}. The user was born on {dob} at {birthTime} in {birthLocation}. Use this to answer their questions.";
+
+const PROVIDERS: Record<ChatProviderName, LlmProviderConfig> = {
   "Sayar Gyi": {
     personaName: "Sayar Gyi",
     tone: "Traditional, authoritative tone",
@@ -55,10 +63,21 @@ function isChatProviderName(value: unknown): value is ChatProviderName {
   return typeof value === "string" && value in PROVIDERS;
 }
 
-function buildSystemPrompt(config: ProviderConfig, profile: { dob: Date; birthTime: string; birthLocation: string }) {
-  const dob = profile.dob.toISOString().slice(0, 10);
+function buildSystemPrompt(
+  config: LlmProviderConfig,
+  profile: { dob: Date; birthTime: string; birthLocation: string },
+  editableConfig?: Pick<EditableProviderConfig, "systemPrompt"> | null,
+) {
+  const variables: Record<string, string> = {
+    personaName: config.personaName,
+    tone: config.tone,
+    dob: profile.dob.toISOString().slice(0, 10),
+    birthTime: profile.birthTime,
+    birthLocation: profile.birthLocation,
+  };
+  const promptTemplate = editableConfig?.systemPrompt?.trim() || DEFAULT_SYSTEM_PROMPT;
 
-  return `You are ${config.personaName}, an expert astrologer. Tone: ${config.tone}. The user was born on ${dob} at ${profile.birthTime} in ${profile.birthLocation}. Use this to answer their questions.`;
+  return promptTemplate.replace(/\{(personaName|tone|dob|birthTime|birthLocation)\}/g, (_, key: string) => variables[key] ?? "");
 }
 
 function normalizeApiKey(rawApiKey: string) {
@@ -79,7 +98,7 @@ function normalizeApiKey(rawApiKey: string) {
   return apiKey;
 }
 
-function getApiKey(config: ProviderConfig) {
+function getApiKey(config: LlmProviderConfig) {
   const rawApiKey = process.env[config.envKey] ?? (config.personaName === "Min Thet" ? process.env.GEMINI_API_KEY : undefined);
 
   return rawApiKey ? normalizeApiKey(rawApiKey) : undefined;
@@ -95,7 +114,7 @@ function assertHeaderSafeApiKey(apiKey: string, envKey: string) {
   }
 }
 
-function getModel(config: ProviderConfig) {
+function getModel(config: LlmProviderConfig) {
   return process.env[config.modelEnvKey] ?? config.defaultModel;
 }
 
@@ -207,7 +226,7 @@ async function callGoogleProvider(options: { apiKey: string; model: string; syst
   return content.trim();
 }
 
-async function callProvider(config: ProviderConfig, systemPrompt: string, messages: ChatMessage[]) {
+async function callProvider(config: LlmProviderConfig, systemPrompt: string, messages: ChatMessage[]) {
   const apiKey = getApiKey(config);
 
   if (!apiKey) {
@@ -362,13 +381,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "You do not have enough credits to chat." }, { status: 403 });
   }
 
-  const [profile, previousMessages] = await Promise.all([
+  const [profile, editableProviderConfig, previousMessages] = await Promise.all([
     prisma.astrologicalProfile.findUnique({
       where: { userId: session.userId },
       select: {
         dob: true,
         birthTime: true,
         birthLocation: true,
+      },
+    }),
+    prisma.providerConfig.findUnique({
+      where: { name: providerName },
+      select: {
+        isActive: true,
+        systemPrompt: true,
       },
     }),
     prisma.message.findMany({
@@ -391,6 +417,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please complete your astrological profile before chatting." }, { status: 400 });
   }
 
+  if (editableProviderConfig && !editableProviderConfig.isActive) {
+    return NextResponse.json({ error: `${providerName} is currently unavailable.` }, { status: 403 });
+  }
+
   const didDeductCredit = await deductOneCredit(session.userId, userWithCredits.dailyFreeCredits);
 
   if (!didDeductCredit) {
@@ -398,7 +428,7 @@ export async function POST(request: Request) {
   }
 
   const config = PROVIDERS[providerName];
-  const systemPrompt = buildSystemPrompt(config, profile);
+  const systemPrompt = buildSystemPrompt(config, profile, editableProviderConfig);
   const conversationMessages = [
     ...previousMessages.reverse().map((previousMessage: { role: "user" | "assistant"; content: string }) => ({
       role: previousMessage.role,

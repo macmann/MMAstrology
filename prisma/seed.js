@@ -9,6 +9,9 @@ const DEFAULT_ADMIN = {
   role: "ADMIN",
 };
 
+const DEFAULT_SYSTEM_PROMPT =
+  "You are {personaName}, an expert astrologer. Tone: {tone}. The user was born on {dob} at {birthTime} in {birthLocation}. Use this to answer their questions.";
+
 const DEFAULT_PROVIDERS = ["Sayar Gyi", "Daw Nilar", "Min Thet", "Ko Tar Yar"];
 
 async function main() {
@@ -33,7 +36,7 @@ async function main() {
       prisma.providerConfig.upsert({
         where: { name },
         update: { isActive: true },
-        create: { name, isActive: true },
+        create: { name, isActive: true, systemPrompt: DEFAULT_SYSTEM_PROMPT },
       }),
     ),
   );
