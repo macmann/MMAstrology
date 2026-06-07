@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkAndResetCredits } from "@/lib/credits";
 
 export default async function DashboardPage() {
   const session = await getCurrentSession();
@@ -8,6 +9,8 @@ export default async function DashboardPage() {
   if (!session) {
     redirect("/login");
   }
+
+  await checkAndResetCredits(session.userId);
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -22,6 +25,10 @@ export default async function DashboardPage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (!user.astrologicalProfile) {
+    redirect("/onboarding");
   }
 
   const totalCredits = user.dailyFreeCredits + user.purchasedCredits;
@@ -59,24 +66,20 @@ export default async function DashboardPage() {
         <section className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur">
             <h2 className="text-xl font-semibold">Astrological profile</h2>
-            {user.astrologicalProfile ? (
-              <dl className="mt-5 space-y-4 text-sm text-slate-300">
-                <div>
-                  <dt className="text-slate-500">Date of birth</dt>
-                  <dd>{user.astrologicalProfile.dob.toDateString()}</dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">Birth time</dt>
-                  <dd>{user.astrologicalProfile.birthTime}</dd>
-                </div>
-                <div>
-                  <dt className="text-slate-500">Birth location</dt>
-                  <dd>{user.astrologicalProfile.birthLocation}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="mt-5 rounded-2xl bg-slate-950/60 p-4 text-sm leading-6 text-slate-300">No profile has been created yet. The schema is ready to store date of birth, birth time, and birth location.</p>
-            )}
+            <dl className="mt-5 space-y-4 text-sm text-slate-300">
+              <div>
+                <dt className="text-slate-500">Date of birth</dt>
+                <dd>{user.astrologicalProfile.dob.toDateString()}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Birth time</dt>
+                <dd>{user.astrologicalProfile.birthTime}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Birth location</dt>
+                <dd>{user.astrologicalProfile.birthLocation}</dd>
+              </div>
+            </dl>
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur">
