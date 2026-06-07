@@ -13,7 +13,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [credits, user] = await Promise.all([
+  const [credits, user, activeProviderConfigs] = await Promise.all([
     checkAndResetCredits(session.userId),
     prisma.user.findUnique({
       where: { id: session.userId },
@@ -24,6 +24,10 @@ export default async function DashboardPage() {
         },
       },
     }),
+    prisma.providerConfig.findMany({
+      where: { isActive: true },
+      select: { name: true },
+    }),
   ]);
 
   if (!user || !credits) {
@@ -33,6 +37,9 @@ export default async function DashboardPage() {
   if (!user.astrologicalProfile) {
     redirect("/onboarding");
   }
+
+  const activeProviderNames = new Set(activeProviderConfigs.map((provider) => provider.name));
+  const availableAstrologers = astrologers.filter((astrologer) => activeProviderNames.has(astrologer.name));
 
   return (
     <>
@@ -74,7 +81,12 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mt-4 space-y-4">
-          {astrologers.map((astrologer) => (
+          {availableAstrologers.length === 0 ? (
+            <div className="rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-5 text-sm leading-6 text-violet-100/70">
+              No astrologers are available right now. Please check back soon.
+            </div>
+          ) : null}
+          {availableAstrologers.map((astrologer) => (
             <Link
               key={astrologer.name}
               href={`/chat/${encodeURIComponent(astrologer.name)}`}
