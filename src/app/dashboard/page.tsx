@@ -74,13 +74,12 @@ export default async function DashboardPage() {
         </div>
 
         <div className="mt-4 space-y-4">
-          {astrologers.map((astrologer, index) => (
+          {astrologers.map((astrologer) => (
             <Link
               key={astrologer.name}
               href={`/chat/${encodeURIComponent(astrologer.name)}`}
-              className="group grid grid-cols-[2.9rem_1fr_auto] items-center gap-3 rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-3 shadow-xl shadow-violet-950/20 backdrop-blur transition hover:border-amber-200/40 hover:bg-white/[0.12] active:scale-[0.99]"
+              className="group grid grid-cols-[1fr_auto] items-center gap-3 rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-3 shadow-xl shadow-violet-950/20 backdrop-blur transition hover:border-amber-200/40 hover:bg-white/[0.12] active:scale-[0.99]"
             >
-              <div className="text-center text-lg font-black text-amber-100">{index + 1}</div>
               <article className="min-w-0">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${astrologer.accent} text-2xl shadow-lg ${astrologer.glow}`}>
