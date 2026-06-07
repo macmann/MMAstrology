@@ -32,7 +32,8 @@ export function LoginForm() {
       return;
     }
 
-    router.push(searchParams.get("next") ?? "/dashboard");
+    const roleDashboard = payload.user?.role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
+    router.push(searchParams.get("next") ?? roleDashboard);
     router.refresh();
   }
 
