@@ -10,6 +10,8 @@ A monolithic AI astrology web application built with Next.js App Router, Tailwin
    cp .env.example .env
    ```
 
+   Required local values include `DATABASE_URL`, `JWT_SECRET`, and the AI provider keys used by the chat personas: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENAI_API_KEY` (or the legacy `GEMINI_API_KEY` alias), and `XAI_API_KEY`. `ADMIN_SECRET` is required only when using the admin credit API without an admin session. Optional model override variables are included in `.env.example`.
+
 2. Install dependencies:
 
    ```bash
