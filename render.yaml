@@ -10,16 +10,26 @@ services:
         fromDatabase:
           name: mmastrology-db
           property: connectionString
-      - key: NEXTAUTH_SECRET
+      - key: JWT_SECRET
         sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GOOGLE_GENAI_API_KEY
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: XAI_API_KEY
         sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: ANTHROPIC_MODEL
+        value: claude-3-5-haiku-latest
+      - key: GOOGLE_GENAI_MODEL
+        value: gemini-1.5-flash
+      - key: XAI_MODEL
+        value: grok-2-latest
       - key: ADMIN_SECRET
         sync: false
 
