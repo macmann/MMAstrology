@@ -24,6 +24,9 @@ model User {
   role                Role                 @default(USER)
   dailyFreeCredits    Int                  @default(4)
   purchasedCredits    Int                  @default(0)
+  isBanned            Boolean              @default(false)
+  bannedAt            DateTime?
+  banReason           String?              @db.Text
   lastCreditReset     DateTime             @default(now())
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, SESSION_MAX_AGE_SECONDS, verifySessionToken } from "@/lib/session-token";
 
 export { AUTH_COOKIE_NAME, signSessionToken, verifySessionToken } from "@/lib/session-token";
@@ -11,7 +12,26 @@ export async function getCurrentSession() {
     return null;
   }
 
-  return verifySessionToken(token);
+  const session = await verifySessionToken(token);
+
+  if (!session) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, email: true, role: true, isBanned: true },
+  });
+
+  if (!user || user.isBanned) {
+    return null;
+  }
+
+  return {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  };
 }
 
 export function getAuthCookieOptions() {
