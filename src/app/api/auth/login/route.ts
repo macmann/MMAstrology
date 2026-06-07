@@ -18,6 +18,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
+  if (user.isBanned) {
+    return NextResponse.json({ error: "This account has been banned. Please contact support." }, { status: 403 });
+  }
+
   const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValidPassword) {
