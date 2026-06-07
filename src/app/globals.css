@@ -1,11 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #e2e8f0;
 }
 
 body {
   min-height: 100vh;
-  background: #050314;
-  color: #f8fafc;
+  margin: 0;
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+button,
+a,
+textarea,
+input {
+  -webkit-tap-highlight-color: transparent;
 }
