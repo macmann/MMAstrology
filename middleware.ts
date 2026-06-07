@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/session-token";
 
-const protectedRoutes = ["/dashboard", "/onboarding", "/chat"];
+const protectedRoutes = ["/dashboard", "/admin", "/onboarding", "/chat"];
 const authRoutes = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
@@ -17,13 +17,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isAuthRoute && session) {
+  if (session?.role === "ADMIN" && pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+  }
+
+  if (session?.role === "USER" && pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isAuthRoute && session) {
+    const dashboardPath = session.role === "ADMIN" ? "/admin/dashboard" : "/dashboard";
+    return NextResponse.redirect(new URL(dashboardPath, request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding", "/chat/:path*", "/login", "/register"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/onboarding", "/chat/:path*", "/login", "/register"],
 };
