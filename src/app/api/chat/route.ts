@@ -61,8 +61,38 @@ function buildSystemPrompt(config: ProviderConfig, profile: { dob: Date; birthTi
   return `You are ${config.personaName}, an expert astrologer. Tone: ${config.tone}. The user was born on ${dob} at ${profile.birthTime} in ${profile.birthLocation}. Use this to answer their questions.`;
 }
 
+function normalizeApiKey(rawApiKey: string) {
+  let apiKey = rawApiKey.trim();
+
+  if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+    apiKey = apiKey.slice(1, -1).trim();
+  }
+
+  if (apiKey.toLowerCase().startsWith("bearer ")) {
+    apiKey = apiKey.slice("bearer ".length).trim();
+  }
+
+  if (apiKey.toLowerCase().startsWith("authorization: bearer ")) {
+    apiKey = apiKey.slice("authorization: bearer ".length).trim();
+  }
+
+  return apiKey;
+}
+
 function getApiKey(config: ProviderConfig) {
-  return process.env[config.envKey] ?? (config.personaName === "Min Thet" ? process.env.GEMINI_API_KEY : undefined);
+  const rawApiKey = process.env[config.envKey] ?? (config.personaName === "Min Thet" ? process.env.GEMINI_API_KEY : undefined);
+
+  return rawApiKey ? normalizeApiKey(rawApiKey) : undefined;
+}
+
+function assertHeaderSafeApiKey(apiKey: string, envKey: string) {
+  if (!apiKey) {
+    throw new Error(`${envKey} is empty after trimming whitespace.`);
+  }
+
+  if (/[\r\n]/.test(apiKey)) {
+    throw new Error(`${envKey} contains line breaks. Paste only the raw API key value without newlines.`);
+  }
 }
 
 function getModel(config: ProviderConfig) {
@@ -183,6 +213,8 @@ async function callProvider(config: ProviderConfig, systemPrompt: string, messag
   if (!apiKey) {
     throw new Error(`${config.envKey} is not configured.`);
   }
+
+  assertHeaderSafeApiKey(apiKey, config.envKey);
 
   const model = getModel(config);
 
