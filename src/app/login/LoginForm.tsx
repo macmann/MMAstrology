@@ -38,27 +38,27 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-5 rounded-[2rem] border border-white bg-white p-6 shadow-2xl shadow-slate-300/60">
+    <form onSubmit={handleSubmit} className="cosmic-form">
       <div>
-        <h1 className="text-3xl font-black tracking-tight text-[#0b1f3f]">Welcome back</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-500">Log in to continue your AI astrology conversations.</p>
+        <h1 className="text-3xl font-black tracking-tight text-white">Welcome back</h1>
+        <p className="mt-2 text-sm leading-6 text-violet-100/70">Log in to continue your AI astrology conversations.</p>
       </div>
 
       {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</p> : null}
 
-      <label className="block text-sm font-bold text-slate-600">
+      <label className="block text-sm font-bold text-slate-300">
         Email
-        <input name="email" type="email" autoComplete="email" required className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-emerald-400 focus:bg-white" />
+        <input name="email" type="email" autoComplete="email" required className="cosmic-input" />
       </label>
-      <label className="block text-sm font-bold text-slate-600">
+      <label className="block text-sm font-bold text-slate-300">
         Password
-        <input name="password" type="password" autoComplete="current-password" required className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-emerald-400 focus:bg-white" />
+        <input name="password" type="password" autoComplete="current-password" required className="cosmic-input" />
       </label>
-      <button type="submit" disabled={isSubmitting} className="w-full rounded-[1.25rem] bg-[#0b1f3f] px-5 py-3 font-black text-white transition hover:bg-[#12315d] disabled:cursor-not-allowed disabled:opacity-60">
+      <button type="submit" disabled={isSubmitting} className="cosmic-button">
         {isSubmitting ? "Opening dashboard..." : "Log in"}
       </button>
-      <p className="text-center text-sm leading-6 text-slate-500">
-        New to MMAstrology? <Link href="/register" className="font-black text-emerald-700 hover:text-emerald-900">Create an account</Link>
+      <p className="text-center text-sm leading-6 text-violet-100/70">
+        New to MMAstrology? <Link href="/register" className="font-black text-amber-200 hover:text-amber-100">Create an account</Link>
       </p>
     </form>
   );

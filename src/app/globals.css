@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 * {
@@ -9,14 +9,26 @@
 }
 
 html {
-  background: #e2e8f0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(250, 204, 21, 0.16), transparent 28rem),
+    radial-gradient(circle at 85% 18%, rgba(217, 70, 239, 0.24), transparent 24rem),
+    radial-gradient(circle at 50% 105%, rgba(45, 212, 191, 0.14), transparent 26rem),
+    #07051a;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background: #e2e8f0;
-  color: #0f172a;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.18) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 70% 35%, rgba(255, 255, 255, 0.16) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 35% 75%, rgba(250, 204, 21, 0.18) 0 1px, transparent 1.8px),
+    transparent;
+  background-size: 46px 46px, 46px 46px, 120px 120px, 170px 170px, 210px 210px;
+  color: #f8fafc;
 }
 
 button,
@@ -24,4 +36,56 @@ a,
 textarea,
 input {
   -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  .cosmic-page {
+    @apply min-h-screen bg-[#07051a] text-slate-50 sm:py-6;
+  }
+
+  .cosmic-shell {
+    @apply mx-auto min-h-screen max-w-[430px] overflow-hidden border-x border-white/10 bg-[#120b2d] shadow-2xl shadow-fuchsia-950/40 sm:min-h-[calc(100vh-3rem)] sm:rounded-[2.25rem] sm:border;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(250, 204, 21, 0.16), transparent 14rem),
+      radial-gradient(circle at 92% 7%, rgba(168, 85, 247, 0.28), transparent 16rem),
+      linear-gradient(180deg, #160d36 0%, #100a29 42%, #0d1028 100%);
+  }
+
+  .cosmic-header {
+    @apply relative overflow-hidden px-6 pb-10 pt-7 text-white;
+    background:
+      radial-gradient(circle at 78% 8%, rgba(250, 204, 21, 0.28), transparent 9rem),
+      radial-gradient(circle at 10% 10%, rgba(217, 70, 239, 0.24), transparent 10rem),
+      linear-gradient(135deg, #2a145c 0%, #180b3f 48%, #081c3a 100%);
+  }
+
+  .cosmic-header::before {
+    content: "✦   ✧      ✶      ✦    ✺      ✧";
+    @apply pointer-events-none absolute inset-x-4 top-4 text-[0.7rem] tracking-[1.1rem] text-amber-100/45;
+  }
+
+  .cosmic-card {
+    @apply relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.08] p-5 text-slate-100 shadow-2xl shadow-violet-950/30 backdrop-blur-xl;
+  }
+
+  .cosmic-card::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-fuchsia-300/10;
+  }
+
+  .cosmic-form {
+    @apply relative w-full space-y-5 overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.09] p-6 text-slate-100 shadow-2xl shadow-violet-950/30 backdrop-blur-xl;
+  }
+
+  .cosmic-input {
+    @apply mt-2 w-full rounded-2xl border border-white/15 bg-[#0b0824]/70 px-4 py-3 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-amber-300 focus:bg-[#120b2d] focus:ring-2 focus:ring-fuchsia-300/25;
+  }
+
+  .cosmic-button {
+    @apply w-full rounded-[1.25rem] bg-gradient-to-r from-amber-200 via-fuchsia-300 to-violet-400 px-5 py-3 font-black text-[#160b2f] shadow-lg shadow-fuchsia-950/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .cosmic-chip {
+    @apply rounded-full border border-amber-200/20 bg-amber-100/10 px-3 py-2 text-xs font-black text-amber-100 shadow-sm;
+  }
 }
