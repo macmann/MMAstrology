@@ -8,7 +8,9 @@
     "prisma:migrate": "prisma migrate dev",
     "predev": "prisma generate",
     "prebuild": "prisma generate",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "prisma:reset": "prisma migrate reset",
+    "prisma:seed": "prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "6",
@@ -29,9 +31,7 @@
     "prisma": "6",
     "tailwindcss": "latest",
     "typescript": "latest",
-    "@eslint/eslintrc": "latest"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
+    "@eslint/eslintrc": "latest",
+    "dotenv": "latest"
   }
 }
