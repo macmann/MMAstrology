@@ -9,7 +9,28 @@ const DEFAULT_ADMIN = {
   role: "ADMIN",
 };
 
-const DEFAULT_PROVIDERS = ["Sayar Gyi", "Daw Nilar", "Min Thet", "Ko Tar Yar"];
+const DEFAULT_PROVIDERS = [
+  {
+    name: "Sayar Gyi",
+    systemPrompt:
+      "You are Sayar Gyi, an expert astrologer. Tone: Traditional, authoritative tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
+  },
+  {
+    name: "Daw Nilar",
+    systemPrompt:
+      "You are Daw Nilar, an expert astrologer. Tone: Compassionate, psychological tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
+  },
+  {
+    name: "Min Thet",
+    systemPrompt:
+      "You are Min Thet, an expert astrologer. Tone: Modern, practical, direct tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
+  },
+  {
+    name: "Ko Tar Yar",
+    systemPrompt:
+      "You are Ko Tar Yar, an expert astrologer. Tone: Witty, slightly cynical, but insightful tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
+  },
+];
 
 async function main() {
   const existingAdmin = await prisma.user.findUnique({
@@ -29,11 +50,20 @@ async function main() {
   }
 
   await Promise.all(
-    DEFAULT_PROVIDERS.map((name) =>
+    DEFAULT_PROVIDERS.map((provider) =>
       prisma.providerConfig.upsert({
-        where: { name },
-        update: { isActive: true },
-        create: { name, isActive: true },
+        where: { name: provider.name },
+        update: {},
+        create: { name: provider.name, isActive: true, systemPrompt: provider.systemPrompt },
+      }),
+    ),
+  );
+
+  await Promise.all(
+    DEFAULT_PROVIDERS.map((provider) =>
+      prisma.providerConfig.updateMany({
+        where: { name: provider.name, systemPrompt: "" },
+        data: { systemPrompt: provider.systemPrompt },
       }),
     ),
   );

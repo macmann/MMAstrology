@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { checkAndResetCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
+import { buildSystemPrompt } from "@/lib/provider-prompts";
 
 export const runtime = "nodejs";
 
@@ -53,12 +54,6 @@ const PROVIDERS: Record<ChatProviderName, ProviderConfig> = {
 
 function isChatProviderName(value: unknown): value is ChatProviderName {
   return typeof value === "string" && value in PROVIDERS;
-}
-
-function buildSystemPrompt(config: ProviderConfig, profile: { dob: Date; birthTime: string; birthLocation: string }) {
-  const dob = profile.dob.toISOString().slice(0, 10);
-
-  return `You are ${config.personaName}, an expert astrologer. Tone: ${config.tone}. The user was born on ${dob} at ${profile.birthTime} in ${profile.birthLocation}. Use this to answer their questions.`;
 }
 
 function normalizeApiKey(rawApiKey: string) {
@@ -362,7 +357,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "You do not have enough credits to chat." }, { status: 403 });
   }
 
-  const [profile, previousMessages] = await Promise.all([
+  const [profile, previousMessages, providerConfig] = await Promise.all([
     prisma.astrologicalProfile.findUnique({
       where: { userId: session.userId },
       select: {
@@ -385,10 +380,21 @@ export async function POST(request: Request) {
         content: true,
       },
     }),
+    prisma.providerConfig.findUnique({
+      where: { name: providerName },
+      select: {
+        isActive: true,
+        systemPrompt: true,
+      },
+    }),
   ]);
 
   if (!profile) {
     return NextResponse.json({ error: "Please complete your astrological profile before chatting." }, { status: 400 });
+  }
+
+  if (!providerConfig?.isActive) {
+    return NextResponse.json({ error: `${providerName} is currently unavailable.` }, { status: 403 });
   }
 
   const didDeductCredit = await deductOneCredit(session.userId, userWithCredits.dailyFreeCredits);
@@ -398,7 +404,7 @@ export async function POST(request: Request) {
   }
 
   const config = PROVIDERS[providerName];
-  const systemPrompt = buildSystemPrompt(config, profile);
+  const systemPrompt = buildSystemPrompt(config, profile, providerConfig.systemPrompt);
   const conversationMessages = [
     ...previousMessages.reverse().map((previousMessage: { role: "user" | "assistant"; content: string }) => ({
       role: previousMessage.role,

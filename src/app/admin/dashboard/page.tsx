@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +7,18 @@ type ProviderSummary = {
   id: string;
   name: string;
   isActive: boolean;
+  systemPrompt: string;
 };
+
+function getPromptPreview(systemPrompt: string) {
+  const prompt = systemPrompt.trim();
+
+  if (!prompt) {
+    return "No custom system prompt has been saved yet.";
+  }
+
+  return prompt.length > 180 ? `${prompt.slice(0, 180)}…` : prompt;
+}
 
 export default async function AdminDashboardPage() {
   const session = await getCurrentSession();
@@ -27,6 +39,7 @@ export default async function AdminDashboardPage() {
         id: true,
         name: true,
         isActive: true,
+        systemPrompt: true,
       },
     }),
   ]);
@@ -40,7 +53,7 @@ export default async function AdminDashboardPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-200">Admin</p>
           <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-5xl">Superadmin dashboard</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-violet-100/75">
-            Manage MMAstrology provider availability and monitor seeded application setup.
+            Manage MMAstrology provider availability, review system prompts, and monitor seeded application setup.
           </p>
         </header>
 
@@ -62,22 +75,37 @@ export default async function AdminDashboardPage() {
           <div className="mb-5">
             <p className="text-sm font-medium uppercase tracking-[0.25em] text-slate-500">Provider configuration</p>
             <h2 className="mt-2 text-2xl font-bold text-white">Default astrology providers</h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Open a provider details page to enable or disable the provider and update the system prompt used for chat replies.
+            </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4">
             {providers.map((provider) => (
               <div key={provider.id} className="rounded-2xl border border-white/15 bg-[#100a29]/80 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="font-semibold text-white">{provider.name}</p>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
-                      provider.isActive
-                        ? "border-amber-300/30 bg-amber-400/10 text-amber-100"
-                        : "border-slate-300/20 bg-slate-400/10 text-violet-100/75"
-                    }`}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="font-semibold text-white">{provider.name}</p>
+                      <span
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
+                          provider.isActive
+                            ? "border-amber-300/30 bg-amber-400/10 text-amber-100"
+                            : "border-slate-300/20 bg-slate-400/10 text-violet-100/75"
+                        }`}
+                      >
+                        {provider.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">System prompt</p>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-violet-100/75">{getPromptPreview(provider.systemPrompt)}</p>
+                  </div>
+                  <Link
+                    href={`/admin/dashboard/providers/${provider.id}`}
+                    className="shrink-0 rounded-full border border-amber-200/25 bg-amber-200 px-4 py-2 text-center text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
                   >
-                    {provider.isActive ? "Active" : "Inactive"}
-                  </span>
+                    Details
+                  </Link>
                 </div>
               </div>
             ))}
