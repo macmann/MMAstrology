@@ -216,13 +216,13 @@ export function ChatInterface({
   const isInputDisabled = isOutOfCredits || isSending || isLoadingHistory;
 
   return (
-    <main className="min-h-screen bg-slate-200 text-slate-950 sm:py-6">
-      <div className="mx-auto flex min-h-screen max-w-[430px] flex-col overflow-hidden bg-[#eef3f8] shadow-2xl shadow-slate-400/40 sm:min-h-[calc(100vh-3rem)] sm:rounded-[2.25rem]">
-        <header className="sticky top-0 z-20 bg-[#0b1f3f] px-4 py-4 text-white shadow-xl shadow-slate-400/20">
+    <main className="cosmic-page">
+      <div className="cosmic-shell flex flex-col">
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a0f3d]/90 px-4 py-4 text-white shadow-xl shadow-fuchsia-950/30 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
-            className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-200"
           >
             ← Dashboard
           </Link>
@@ -231,11 +231,11 @@ export function ChatInterface({
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-black text-white">{providerName}</p>
-            <p className="truncate text-xs font-semibold text-slate-300">{providerTitle} · {providerSubtitle}</p>
+            <p className="truncate text-xs font-semibold text-violet-100/75">{providerTitle} · {providerSubtitle}</p>
           </div>
           {totalCredits !== null ? (
             <div className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-right">
-              <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-emerald-300">Credits</p>
+              <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-amber-200">Credits</p>
               <p className="font-bold text-white">{totalCredits}</p>
             </div>
           ) : null}
@@ -243,7 +243,7 @@ export function ChatInterface({
         </header>
 
         {isOutOfCredits ? (
-        <div className="bg-amber-100 px-4 py-3 text-center text-sm font-black text-amber-800">
+        <div className="border-y border-amber-200/20 bg-amber-200/15 px-4 py-3 text-center text-sm font-black text-amber-100">
           {LIMIT_MESSAGE}
         </div>
       ) : null}
@@ -255,20 +255,20 @@ export function ChatInterface({
           </div>
         ) : null}
 
-        <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white bg-white p-4 shadow-2xl shadow-slate-300/60">
+        <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-[2rem] border border-white/15 bg-white/[0.08] p-4 shadow-2xl shadow-violet-950/30 backdrop-blur-xl">
           <div className="flex-1 space-y-4 overflow-y-auto pr-1">
             {isLoadingHistory ? (
-              <div className="flex min-h-80 items-center justify-center text-slate-500">
+              <div className="flex min-h-80 items-center justify-center text-violet-100/65">
                 Loading your conversation…
               </div>
             ) : messages.length === 0 ? (
               <div className="flex min-h-80 items-center justify-center text-center">
-                <div className="max-w-md rounded-[2rem] border border-slate-100 bg-slate-50 p-8">
+                <div className="max-w-md rounded-[2rem] border border-white/10 bg-white/10 p-8">
                   <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br ${providerGradient} text-3xl shadow-lg`}>
                     {providerSymbol}
                   </div>
-                  <h1 className="text-2xl font-black text-[#0b1f3f]">Start your consultation</h1>
-                  <p className="mt-3 text-slate-500">
+                  <h1 className="text-2xl font-black text-white">Start your consultation</h1>
+                  <p className="mt-3 text-violet-100/65">
                     Ask {providerName} about love, career, timing, or your current cosmic pattern.
                   </p>
                 </div>
@@ -282,13 +282,13 @@ export function ChatInterface({
                     <div
                       className={`max-w-[85%] rounded-[1.5rem] px-4 py-3 text-sm leading-6 shadow-lg  ${
                         isUser
-                          ? "rounded-br-md bg-[#0b1f3f] text-white shadow-slate-400/30"
-                          : "rounded-bl-md border border-slate-100 bg-slate-100 text-slate-700 shadow-slate-300/30"
+                          ? "rounded-br-md bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-violet-950/30"
+                          : "rounded-bl-md border border-white/10 bg-white/10 text-violet-50 shadow-violet-950/20"
                       } ${message.status === "error" ? "border border-rose-300/50 bg-rose-500/20" : ""}`}
                     >
                       <p className="whitespace-pre-wrap">{message.content}</p>
                       {message.status === "sending" ? (
-                        <p className="mt-2 text-xs font-bold text-slate-400">Sending…</p>
+                        <p className="mt-2 text-xs font-bold text-violet-100/65">Sending…</p>
                       ) : null}
                       {message.status === "error" ? (
                         <p className="mt-2 text-xs font-bold text-rose-100">Not sent</p>
@@ -301,8 +301,8 @@ export function ChatInterface({
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-slate-100 pt-4">
-            <div className="flex gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-2 shadow-inner shadow-slate-200/80 focus-within:border-emerald-300">
+          <form onSubmit={handleSubmit} className="border-t border-white/10 pt-4">
+            <div className="flex gap-2 rounded-3xl border border-white/15 bg-[#0b0824]/80 p-2 shadow-inner shadow-violet-950/30 focus-within:border-amber-300">
               <textarea
                 aria-label="Message"
                 value={inputValue}
@@ -310,7 +310,7 @@ export function ChatInterface({
                 disabled={isInputDisabled}
                 placeholder={isOutOfCredits ? LIMIT_MESSAGE : `Message ${providerName}…`}
                 rows={1}
-                className="max-h-36 min-h-12 flex-1 resize-none bg-transparent px-3 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-400"
+                className="max-h-36 min-h-12 flex-1 resize-none bg-transparent px-3 py-3 text-sm text-slate-50 outline-none placeholder:text-violet-100/65 disabled:cursor-not-allowed disabled:text-violet-100/65"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -321,12 +321,12 @@ export function ChatInterface({
               <button
                 type="submit"
                 disabled={isInputDisabled || !inputValue.trim()}
-                className="rounded-2xl bg-emerald-300 px-5 py-3 text-sm font-black text-[#0b1f3f] transition hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                className="rounded-2xl bg-gradient-to-r from-amber-200 to-fuchsia-300 px-5 py-3 text-sm font-black text-[#160b2f] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-700 disabled:text-slate-400"
               >
                 {isSending ? "Sending" : "Send"}
               </button>
             </div>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-violet-100/65">
               Press Enter to send, Shift + Enter for a new line. Each sent message costs 1 credit.
             </p>
           </form>
