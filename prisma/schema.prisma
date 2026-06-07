@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MessageRole {
+  user
+  assistant
+}
+
+model User {
+  id                 String                @id @default(cuid())
+  email              String                @unique
+  passwordHash       String
+  role               Role                  @default(USER)
+  dailyFreeCredits   Int                   @default(4)
+  purchasedCredits   Int                   @default(0)
+  lastCreditReset    DateTime              @default(now())
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  astrologicalProfile AstrologicalProfile?
+  messages           Message[]
+}
+
+model AstrologicalProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dob           DateTime
+  birthTime     String
+  birthLocation String
+}
+
+model Message {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerName String
+  role         MessageRole
+  content      String      @db.Text
+  createdAt    DateTime    @default(now())
+
+  @@index([userId, createdAt])
+}
