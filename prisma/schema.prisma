@@ -18,17 +18,18 @@ enum MessageRole {
 }
 
 model User {
-  id                 String                @id @default(cuid())
-  email              String                @unique
-  passwordHash       String
-  role               Role                  @default(USER)
-  dailyFreeCredits   Int                   @default(4)
-  purchasedCredits   Int                   @default(0)
-  lastCreditReset    DateTime              @default(now())
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  id                  String                @id @default(cuid())
+  email               String                @unique
+  passwordHash        String
+  role                Role                  @default(USER)
+  dailyFreeCredits    Int                   @default(4)
+  purchasedCredits    Int                   @default(0)
+  lastCreditReset     DateTime              @default(now())
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
   astrologicalProfile AstrologicalProfile?
-  messages           Message[]
+  creditTransactions  CreditTransaction[]
+  messages            Message[]
 }
 
 model AstrologicalProfile {
@@ -38,6 +39,17 @@ model AstrologicalProfile {
   dob           DateTime
   birthTime     String
   birthLocation String
+}
+
+model CreditTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model Message {

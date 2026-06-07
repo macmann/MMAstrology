@@ -26,6 +26,10 @@ export async function POST(request: Request) {
 
   const targetUserId = typeof body.targetUserId === "string" ? body.targetUserId.trim() : "";
   const amount = parsePositiveInteger(body.amount);
+  const reason =
+    typeof body.reason === "string" && body.reason.trim()
+      ? body.reason.trim()
+      : `Admin manual credit addition${session?.userId ? ` by ${session.userId}` : " via admin secret"}`;
 
   if (!targetUserId) {
     return NextResponse.json({ error: "targetUserId is required." }, { status: 400 });
@@ -44,20 +48,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Target user was not found." }, { status: 404 });
   }
 
-  const user = await prisma.user.update({
-    where: { id: targetUserId },
-    data: {
-      purchasedCredits: {
-        increment: amount,
+  const [user, transaction] = await prisma.$transaction([
+    prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        purchasedCredits: {
+          increment: amount,
+        },
       },
-    },
-    select: {
-      id: true,
-      email: true,
-      purchasedCredits: true,
-      dailyFreeCredits: true,
-    },
-  });
+      select: {
+        id: true,
+        email: true,
+        purchasedCredits: true,
+        dailyFreeCredits: true,
+      },
+    }),
+    prisma.creditTransaction.create({
+      data: {
+        userId: targetUserId,
+        amount,
+        reason,
+      },
+      select: {
+        id: true,
+        amount: true,
+        reason: true,
+        createdAt: true,
+      },
+    }),
+  ]);
 
-  return NextResponse.json({ user });
+  return NextResponse.json({ user, transaction });
 }
