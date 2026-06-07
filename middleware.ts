@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME, verifySessionToken } from "@/lib/session-token";
 
-const protectedRoutes = ["/dashboard", "/admin", "/onboarding", "/chat"];
+const protectedRoutes = ["/dashboard", "/readings", "/profile", "/history", "/admin", "/onboarding", "/chat"];
 const authRoutes = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
@@ -34,5 +34,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/onboarding", "/chat/:path*", "/login", "/register"],
+  matcher: ["/dashboard/:path*", "/readings/:path*", "/profile/:path*", "/history/:path*", "/admin/:path*", "/onboarding", "/chat/:path*", "/login", "/register"],
 };
