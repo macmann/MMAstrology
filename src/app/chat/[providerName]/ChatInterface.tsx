@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 type ChatMessage = {
   id: string;
@@ -37,6 +38,171 @@ function getTotalCredits(credits: Credits | null) {
 
 function createLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function isMarkdownBlockStart(line: string) {
+  return (
+    /^#{1,6}\s+/.test(line) ||
+    /^[-*]\s+/.test(line) ||
+    /^\d+\.\s+/.test(line) ||
+    /^>\s?/.test(line) ||
+    /^```/.test(line)
+  );
+}
+
+function isSafeHref(href: string) {
+  return href.startsWith("http://") || href.startsWith("https://") || href.startsWith("mailto:") || href.startsWith("/") || href.startsWith("#");
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const pattern = /(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^\s)]+\)|\*[^*]+\*|_[^_]+_)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    const token = match[0];
+    const key = `${match.index}-${token}`;
+
+    if ((token.startsWith("**") && token.endsWith("**")) || (token.startsWith("__") && token.endsWith("__"))) {
+      nodes.push(<strong key={key} className="font-black text-inherit">{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith("`") && token.endsWith("`")) {
+      nodes.push(<code key={key} className="rounded-md bg-black/25 px-1.5 py-0.5 font-mono text-[0.85em] text-amber-100">{token.slice(1, -1)}</code>);
+    } else if (token.startsWith("[") && token.includes("](")) {
+      const closingBracketIndex = token.indexOf("](");
+      const label = token.slice(1, closingBracketIndex);
+      const href = token.slice(closingBracketIndex + 2, -1);
+
+      nodes.push(
+        isSafeHref(href) ? (
+          <a key={key} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noreferrer" : undefined} className="font-bold text-amber-200 underline decoration-amber-200/50 underline-offset-4">
+            {label}
+          </a>
+        ) : (
+          label
+        ),
+      );
+    } else if ((token.startsWith("*") && token.endsWith("*")) || (token.startsWith("_") && token.endsWith("_"))) {
+      nodes.push(<em key={key} className="italic text-inherit">{token.slice(1, -1)}</em>);
+    } else {
+      nodes.push(token);
+    }
+
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
+function MarkdownMessage({ content }: { content: string }) {
+  const lines = content.split(/\r?\n/);
+  const blocks: ReactNode[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    if (/^```/.test(line)) {
+      const codeLines: string[] = [];
+      index += 1;
+
+      while (index < lines.length && !/^```/.test(lines[index])) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+
+      if (index < lines.length) {
+        index += 1;
+      }
+
+      blocks.push(
+        <pre key={`code-${index}`} className="overflow-x-auto rounded-2xl bg-black/30 p-3 text-xs leading-5 text-violet-50">
+          <code>{codeLines.join("\n")}</code>
+        </pre>,
+      );
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const level = Math.min(headingMatch[1].length, 3);
+      const HeadingTag = level === 1 ? "h1" : level === 2 ? "h2" : "h3";
+      const headingClass = level === 1 ? "text-lg" : level === 2 ? "text-base" : "text-sm";
+
+      blocks.push(
+        <HeadingTag key={`heading-${index}`} className={`${headingClass} font-black leading-6 text-inherit`}>
+          {renderInlineMarkdown(headingMatch[2])}
+        </HeadingTag>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      const items: ReactNode[] = [];
+
+      while (index < lines.length && /^[-*]\s+/.test(lines[index])) {
+        items.push(<li key={`item-${index}`}>{renderInlineMarkdown(lines[index].replace(/^[-*]\s+/, ""))}</li>);
+        index += 1;
+      }
+
+      blocks.push(<ul key={`ul-${index}`} className="list-disc space-y-1 pl-5">{items}</ul>);
+      continue;
+    }
+
+    if (/^\d+\.\s+/.test(line)) {
+      const items: ReactNode[] = [];
+
+      while (index < lines.length && /^\d+\.\s+/.test(lines[index])) {
+        items.push(<li key={`item-${index}`}>{renderInlineMarkdown(lines[index].replace(/^\d+\.\s+/, ""))}</li>);
+        index += 1;
+      }
+
+      blocks.push(<ol key={`ol-${index}`} className="list-decimal space-y-1 pl-5">{items}</ol>);
+      continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      const quoteLines: string[] = [];
+
+      while (index < lines.length && /^>\s?/.test(lines[index])) {
+        quoteLines.push(lines[index].replace(/^>\s?/, ""));
+        index += 1;
+      }
+
+      blocks.push(
+        <blockquote key={`quote-${index}`} className="border-l-2 border-amber-200/60 pl-3 text-violet-100/85">
+          {renderInlineMarkdown(quoteLines.join(" "))}
+        </blockquote>,
+      );
+      continue;
+    }
+
+    const paragraphLines = [line];
+    index += 1;
+
+    while (index < lines.length && lines[index].trim() && !isMarkdownBlockStart(lines[index])) {
+      paragraphLines.push(lines[index]);
+      index += 1;
+    }
+
+    blocks.push(<p key={`paragraph-${index}`} className="whitespace-pre-wrap">{renderInlineMarkdown(paragraphLines.join("\n"))}</p>);
+  }
+
+  return <div className="space-y-3 break-words">{blocks}</div>;
 }
 
 export function ChatInterface({
@@ -286,7 +452,7 @@ export function ChatInterface({
                           : "rounded-bl-md border border-white/10 bg-white/10 text-violet-50 shadow-violet-950/20"
                       } ${message.status === "error" ? "border border-rose-300/50 bg-rose-500/20" : ""}`}
                     >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
+                      <MarkdownMessage content={message.content} />
                       {message.status === "sending" ? (
                         <p className="mt-2 text-xs font-bold text-violet-100/65">Sending…</p>
                       ) : null}
