@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">MMAstrology desktop install experience</title>
+  <desc id="desc">A wide desktop mockup of the MMAstrology installable web app.</desc>
+  <defs>
+    <linearGradient id="page" x1="0" x2="1280" y1="0" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07051a"/>
+      <stop offset="0.52" stop-color="#160d36"/>
+      <stop offset="1" stop-color="#081c3a"/>
+    </linearGradient>
+    <linearGradient id="cta" x1="168" x2="552" y1="480" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fde68a"/>
+      <stop offset="0.52" stop-color="#f0abfc"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#page)"/>
+  <circle cx="220" cy="112" r="220" fill="#facc15" opacity="0.12"/>
+  <circle cx="1030" cy="170" r="240" fill="#d946ef" opacity="0.16"/>
+  <circle cx="710" cy="720" r="250" fill="#2dd4bf" opacity="0.1"/>
+  <rect x="112" y="76" width="1056" height="568" rx="46" fill="#ffffff" opacity="0.075" stroke="#ffffff" stroke-opacity="0.13"/>
+  <text x="168" y="150" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900">MMAstrology</text>
+  <text x="168" y="256" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900">Daily astrology</text>
+  <text x="168" y="332" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900">in your pocket.</text>
+  <text x="168" y="392" fill="#ede9fe" opacity="0.82" font-family="Arial, Helvetica, sans-serif" font-size="24">Create your birth profile, preserve conversations,</text>
+  <text x="168" y="426" fill="#ede9fe" opacity="0.82" font-family="Arial, Helvetica, sans-serif" font-size="24">and use credits from a mystical dashboard.</text>
+  <rect x="168" y="468" width="384" height="64" rx="24" fill="url(#cta)"/>
+  <text x="272" y="508" fill="#160b2f" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="900">Start your profile</text>
+  <rect x="730" y="150" width="310" height="420" rx="38" fill="#120b2d" stroke="#ffffff" stroke-opacity="0.18"/>
+  <rect x="766" y="196" width="92" height="92" rx="30" fill="#ffffff" opacity="0.1" stroke="#fde68a" stroke-opacity="0.24"/>
+  <text x="790" y="255" font-size="50">🔮</text>
+  <rect x="766" y="326" width="238" height="42" rx="18" fill="#ffffff" opacity="0.1"/>
+  <rect x="766" y="386" width="238" height="42" rx="18" fill="#f0abfc" opacity="0.18"/>
+  <rect x="766" y="446" width="238" height="42" rx="18" fill="#ffffff" opacity="0.1"/>
+</svg>

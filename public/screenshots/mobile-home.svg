@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 720" role="img" aria-labelledby="title desc">
+  <title id="title">MMAstrology mobile home screen</title>
+  <desc id="desc">A mobile mockup of the MMAstrology landing page with purple cosmic styling.</desc>
+  <defs>
+    <linearGradient id="page" x1="74" x2="466" y1="0" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2a145c"/>
+      <stop offset="0.5" stop-color="#120b2d"/>
+      <stop offset="1" stop-color="#07051a"/>
+    </linearGradient>
+    <linearGradient id="cta" x1="92" x2="448" y1="380" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fde68a"/>
+      <stop offset="0.52" stop-color="#f0abfc"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="540" height="720" fill="#07051a"/>
+  <rect x="46" y="20" width="448" height="680" rx="44" fill="url(#page)" stroke="#ffffff" stroke-opacity="0.13"/>
+  <circle cx="384" cy="104" r="110" fill="#facc15" opacity="0.16"/>
+  <circle cx="122" cy="188" r="130" fill="#d946ef" opacity="0.16"/>
+  <text x="92" y="84" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">MMAstrology</text>
+  <rect x="374" y="58" width="74" height="38" rx="19" fill="#ffffff" opacity="0.12"/>
+  <text x="394" y="83" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700">Log in</text>
+  <rect x="92" y="138" width="76" height="76" rx="26" fill="#ffffff" opacity="0.1" stroke="#fde68a" stroke-opacity="0.24"/>
+  <text x="111" y="188" font-size="42">🔮</text>
+  <text x="92" y="248" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="800" letter-spacing="5">MOBILE COSMIC AI</text>
+  <text x="92" y="306" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="900">Daily astrology</text>
+  <text x="92" y="358" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="900">in your pocket.</text>
+  <rect x="92" y="398" width="356" height="56" rx="22" fill="url(#cta)"/>
+  <text x="194" y="433" fill="#160b2f" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="900">Start your profile</text>
+  <rect x="92" y="476" width="356" height="172" rx="28" fill="#ffffff" opacity="0.09" stroke="#ffffff" stroke-opacity="0.14"/>
+  <text x="120" y="526" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800" letter-spacing="3">TODAY'S INSIGHT</text>
+  <text x="120" y="570" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900">Venus amplifies</text>
+  <text x="120" y="604" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900">relational clarity.</text>
+</svg>
