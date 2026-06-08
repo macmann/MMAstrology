@@ -94,7 +94,36 @@ function getModel(config: ProviderConfig) {
   return process.env[config.modelEnvKey] ?? config.defaultModel;
 }
 
-async function callOpenAiCompatibleProvider(options: {
+function parseSseDataBlocks(buffer: string) {
+  return buffer
+    .replaceAll("\r\n", "\n")
+    .split("\n\n")
+    .map((block) =>
+      block
+        .split("\n")
+        .filter((line) => line.startsWith("data: "))
+        .map((line) => line.slice(6))
+        .join("\n"),
+    )
+    .filter(Boolean);
+}
+
+async function readProviderError(response: Response, fallbackMessage: string) {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const data = await response.json().catch(() => null);
+    const message = data?.error?.message ?? data?.error;
+
+    return typeof message === "string" ? message : fallbackMessage;
+  }
+
+  const text = await response.text().catch(() => "");
+
+  return text.trim() || fallbackMessage;
+}
+
+async function* streamOpenAiCompatibleProvider(options: {
   apiKey: string;
   baseUrl: string;
   model: string;
@@ -111,25 +140,53 @@ async function callOpenAiCompatibleProvider(options: {
       model: options.model,
       messages: [{ role: "system", content: options.systemPrompt }, ...options.messages],
       temperature: 0.8,
+      stream: true,
     }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(typeof data?.error?.message === "string" ? data.error.message : "The AI provider returned an error.");
+    throw new Error(await readProviderError(response, "The AI provider returned an error."));
   }
 
-  const content = data?.choices?.[0]?.message?.content;
-
-  if (typeof content !== "string" || !content.trim()) {
-    throw new Error("The AI provider returned an empty response.");
+  if (!response.body) {
+    throw new Error("The AI provider did not return a stream.");
   }
 
-  return content.trim();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+
+    if (done && buffer) {
+      blocks.push(buffer);
+      buffer = "";
+    }
+
+    for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
+      if (data === "[DONE]") {
+        return;
+      }
+
+      const parsed = JSON.parse(data);
+      const content = parsed?.choices?.[0]?.delta?.content;
+
+      if (typeof content === "string") {
+        yield content;
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
 }
 
-async function callAnthropicProvider(options: { apiKey: string; model: string; systemPrompt: string; messages: ChatMessage[] }) {
+async function* streamAnthropicProvider(options: { apiKey: string; model: string; systemPrompt: string; messages: ChatMessage[] }) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -143,27 +200,51 @@ async function callAnthropicProvider(options: { apiKey: string; model: string; s
       messages: options.messages,
       max_tokens: 1024,
       temperature: 0.8,
+      stream: true,
     }),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(typeof data?.error?.message === "string" ? data.error.message : "Anthropic returned an error.");
+    throw new Error(await readProviderError(response, "Anthropic returned an error."));
   }
 
-  const content = data?.content?.find((block: { type?: string; text?: string }) => block.type === "text")?.text;
-
-  if (typeof content !== "string" || !content.trim()) {
-    throw new Error("Anthropic returned an empty response.");
+  if (!response.body) {
+    throw new Error("Anthropic did not return a stream.");
   }
 
-  return content.trim();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+
+    if (done && buffer) {
+      blocks.push(buffer);
+      buffer = "";
+    }
+
+    for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
+      const parsed = JSON.parse(data);
+      const text = parsed?.delta?.text;
+
+      if (typeof text === "string") {
+        yield text;
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
 }
 
-async function callGoogleProvider(options: { apiKey: string; model: string; systemPrompt: string; messages: ChatMessage[] }) {
+async function* streamGoogleProvider(options: { apiKey: string; model: string; systemPrompt: string; messages: ChatMessage[] }) {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${encodeURIComponent(options.apiKey)}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(options.apiKey)}`,
     {
       method: "POST",
       headers: {
@@ -184,25 +265,48 @@ async function callGoogleProvider(options: { apiKey: string; model: string; syst
     },
   );
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new Error(typeof data?.error?.message === "string" ? data.error.message : "Google Gen AI returned an error.");
+    throw new Error(await readProviderError(response, "Google Gen AI returned an error."));
   }
 
-  const content = data?.candidates?.[0]?.content?.parts
-    ?.map((part: { text?: string }) => part.text)
-    .filter((text: unknown): text is string => typeof text === "string")
-    .join("\n");
-
-  if (typeof content !== "string" || !content.trim()) {
-    throw new Error("Google Gen AI returned an empty response.");
+  if (!response.body) {
+    throw new Error("Google Gen AI did not return a stream.");
   }
 
-  return content.trim();
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+
+    if (done && buffer) {
+      blocks.push(buffer);
+      buffer = "";
+    }
+
+    for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
+      const parsed = JSON.parse(data);
+      const content = parsed?.candidates?.[0]?.content?.parts
+        ?.map((part: { text?: string }) => part.text)
+        .filter((text: unknown): text is string => typeof text === "string")
+        .join("\n");
+
+      if (typeof content === "string") {
+        yield content;
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
 }
 
-async function callProvider(config: ProviderConfig, systemPrompt: string, messages: ChatMessage[]) {
+function streamProvider(config: ProviderConfig, systemPrompt: string, messages: ChatMessage[]) {
   const apiKey = getApiKey(config);
 
   if (!apiKey) {
@@ -214,7 +318,7 @@ async function callProvider(config: ProviderConfig, systemPrompt: string, messag
   const model = getModel(config);
 
   if (config.personaName === "Sayar Gyi") {
-    return callOpenAiCompatibleProvider({
+    return streamOpenAiCompatibleProvider({
       apiKey,
       baseUrl: "https://api.openai.com/v1",
       model,
@@ -224,20 +328,24 @@ async function callProvider(config: ProviderConfig, systemPrompt: string, messag
   }
 
   if (config.personaName === "Daw Nilar") {
-    return callAnthropicProvider({ apiKey, model, systemPrompt, messages });
+    return streamAnthropicProvider({ apiKey, model, systemPrompt, messages });
   }
 
   if (config.personaName === "Min Thet") {
-    return callGoogleProvider({ apiKey, model, systemPrompt, messages });
+    return streamGoogleProvider({ apiKey, model, systemPrompt, messages });
   }
 
-  return callOpenAiCompatibleProvider({
+  return streamOpenAiCompatibleProvider({
     apiKey,
     baseUrl: "https://api.x.ai/v1",
     model,
     systemPrompt,
     messages,
   });
+}
+
+function encodeStreamEvent(event: string, data: unknown) {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
 async function deductOneCredit(userId: string, dailyFreeCredits: number) {
@@ -412,45 +520,68 @@ export async function POST(request: Request) {
     })),
     { role: "user" as const, content: message },
   ];
-  let reply: string;
+  const encoder = new TextEncoder();
 
-  try {
-    reply = await callProvider(config, systemPrompt, conversationMessages);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "The AI provider could not complete this chat." },
-      { status: 502 },
-    );
-  }
+  const stream = new ReadableStream({
+    async start(controller) {
+      let reply = "";
 
-  await prisma.message.createMany({
-    data: [
-      {
-        userId: session.userId,
-        providerName,
-        role: "user",
-        content: message,
-      },
-      {
-        userId: session.userId,
-        providerName,
-        role: "assistant",
-        content: reply,
-      },
-    ],
-  });
+      try {
+        for await (const delta of streamProvider(config, systemPrompt, conversationMessages)) {
+          reply += delta;
+          controller.enqueue(encoder.encode(encodeStreamEvent("delta", { content: delta })));
+        }
 
-  const credits = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      dailyFreeCredits: true,
-      purchasedCredits: true,
+        if (!reply.trim()) {
+          throw new Error("The AI provider returned an empty response.");
+        }
+
+        await prisma.message.createMany({
+          data: [
+            {
+              userId: session.userId,
+              providerName,
+              role: "user",
+              content: message,
+            },
+            {
+              userId: session.userId,
+              providerName,
+              role: "assistant",
+              content: reply.trim(),
+            },
+          ],
+        });
+
+        const credits = await prisma.user.findUnique({
+          where: { id: session.userId },
+          select: {
+            dailyFreeCredits: true,
+            purchasedCredits: true,
+          },
+        });
+
+        controller.enqueue(encoder.encode(encodeStreamEvent("done", { providerName, credits })));
+      } catch (error) {
+        controller.enqueue(
+          encoder.encode(
+            encodeStreamEvent("error", {
+              error: error instanceof Error ? error.message : "The AI provider could not complete this chat.",
+            }),
+          ),
+        );
+      } finally {
+        controller.close();
+      }
     },
   });
 
-  return NextResponse.json({
-    message: reply,
-    providerName,
-    credits,
+  return new Response(stream, {
+    headers: {
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "X-Accel-Buffering": "no",
+    },
   });
 }
