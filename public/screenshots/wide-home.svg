@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
-  <title id="title">MMAstrology desktop install experience</title>
-  <desc id="desc">A wide desktop mockup of the MMAstrology installable web app.</desc>
+  <title id="title">AI Bay Din desktop install experience</title>
+  <desc id="desc">A wide desktop mockup of the AI Bay Din installable web app.</desc>
   <defs>
     <linearGradient id="page" x1="0" x2="1280" y1="0" y2="720" gradientUnits="userSpaceOnUse">
       <stop stop-color="#07051a"/>
@@ -18,7 +18,7 @@
   <circle cx="1030" cy="170" r="240" fill="#d946ef" opacity="0.16"/>
   <circle cx="710" cy="720" r="250" fill="#2dd4bf" opacity="0.1"/>
   <rect x="112" y="76" width="1056" height="568" rx="46" fill="#ffffff" opacity="0.075" stroke="#ffffff" stroke-opacity="0.13"/>
-  <text x="168" y="150" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900">MMAstrology</text>
+  <text x="168" y="150" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900">AI Bay Din</text>
   <text x="168" y="256" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900">Daily astrology</text>
   <text x="168" y="332" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900">in your pocket.</text>
   <text x="168" y="392" fill="#ede9fe" opacity="0.82" font-family="Arial, Helvetica, sans-serif" font-size="24">Create your birth profile, preserve conversations,</text>

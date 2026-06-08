@@ -46,7 +46,7 @@ export function LoginForm() {
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-amber-200/25 bg-white/10 text-4xl shadow-inner shadow-white/10">
           🔮
         </div>
-        <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.42em] text-amber-200/90">MMAstrology</p>
+        <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.42em] text-amber-200/90">AI Bay Din</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight text-white">Log in</h1>
         <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-violet-100/72">
           Return to your cosmic dashboard, saved readings, and AI astrology conversations.
@@ -92,10 +92,10 @@ export function LoginForm() {
       </div>
 
       <button type="submit" disabled={isSubmitting} className="cosmic-button relative">
-        {isSubmitting ? "Opening MMAstrology..." : "Log in to MMAstrology"}
+        {isSubmitting ? "Opening AI Bay Din..." : "Log in to AI Bay Din"}
       </button>
       <p className="relative text-center text-sm leading-6 text-violet-100/70">
-        New to MMAstrology? <Link href="/register" className="font-black text-amber-200 hover:text-amber-100">Create an account</Link>
+        New to AI Bay Din? <Link href="/register" className="font-black text-amber-200 hover:text-amber-100">Create an account</Link>
       </p>
     </form>
   );

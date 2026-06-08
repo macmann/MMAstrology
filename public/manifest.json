@@ -1,6 +1,6 @@
 {
-  "name": "MMAstrology",
-  "short_name": "MMAstro",
+  "name": "AI Bay Din",
+  "short_name": "AI Bay",
   "description": "AI-powered astrology guidance for modern seekers.",
   "id": "/",
   "start_url": "/",
@@ -41,21 +41,21 @@
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow",
-      "label": "MMAstrology mobile home screen"
+      "label": "AI Bay Din mobile home screen"
     },
     {
       "src": "/screenshots/wide-home.svg",
       "sizes": "1280x720",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "MMAstrology desktop install experience"
+      "label": "AI Bay Din desktop install experience"
     }
   ],
   "shortcuts": [
     {
       "name": "Start your profile",
       "short_name": "Register",
-      "description": "Create your birth profile and begin using MMAstrology.",
+      "description": "Create your birth profile and begin using AI Bay Din.",
       "url": "/register",
       "icons": [
         {
@@ -68,7 +68,7 @@
     {
       "name": "Log in",
       "short_name": "Login",
-      "description": "Open your existing MMAstrology account.",
+      "description": "Open your existing AI Bay Din account.",
       "url": "/login",
       "icons": [
         {
