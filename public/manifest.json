@@ -1,0 +1,82 @@
+{
+  "name": "MMAstrology",
+  "short_name": "MMAstro",
+  "description": "AI-powered astrology guidance for modern seekers.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "background_color": "#07051a",
+  "theme_color": "#160d36",
+  "categories": [
+    "lifestyle",
+    "productivity",
+    "utilities"
+  ],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/app-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/app-icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.svg",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "MMAstrology mobile home screen"
+    },
+    {
+      "src": "/screenshots/wide-home.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "MMAstrology desktop install experience"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start your profile",
+      "short_name": "Register",
+      "description": "Create your birth profile and begin using MMAstrology.",
+      "url": "/register",
+      "icons": [
+        {
+          "src": "/icons/app-icon.svg",
+          "sizes": "512x512",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Log in",
+      "short_name": "Login",
+      "description": "Open your existing MMAstrology account.",
+      "url": "/login",
+      "icons": [
+        {
+          "src": "/icons/app-icon.svg",
+          "sizes": "512x512",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}

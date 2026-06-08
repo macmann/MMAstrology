@@ -1,15 +1,44 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MMAstrology",
+  applicationName: "MMAstrology",
+  title: {
+    default: "MMAstrology",
+    template: "%s | MMAstrology",
+  },
   description: "AI-powered astrology guidance for modern seekers.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "MMAstrology",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [{ url: "/icons/app-icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/app-icon.svg", type: "image/svg+xml" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#160d36",
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <ServiceWorkerRegistration />
+      </body>
     </html>
   );
 }

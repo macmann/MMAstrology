@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">MMAstrology maskable app icon</title>
+  <desc id="desc">A centered crystal ball icon with extra cosmic background padding for adaptive masks.</desc>
+  <defs>
+    <linearGradient id="bg" x1="50" x2="462" y1="20" y2="492" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2a145c"/>
+      <stop offset="0.52" stop-color="#160d36"/>
+      <stop offset="1" stop-color="#07051a"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="36%" cy="31%" r="67%">
+      <stop offset="0" stop-color="#fef3c7"/>
+      <stop offset="0.22" stop-color="#c4b5fd"/>
+      <stop offset="0.68" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#4c1d95"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <circle cx="120" cy="92" r="128" fill="#facc15" opacity="0.16"/>
+  <circle cx="410" cy="112" r="144" fill="#d946ef" opacity="0.2"/>
+  <circle cx="262" cy="456" r="132" fill="#2dd4bf" opacity="0.1"/>
+  <g fill="#fef3c7" opacity="0.9">
+    <path d="M126 130l6 18 18 6-18 6-6 18-6-18-18-6 18-6 6-18z"/>
+    <path d="M390 118l5 14 14 5-14 5-5 14-5-14-14-5 14-5 5-14z"/>
+    <circle cx="407" cy="352" r="5"/>
+  </g>
+  <circle cx="256" cy="248" r="102" fill="url(#orb)" stroke="#fde68a" stroke-width="12"/>
+  <path d="M199 214c18-35 63-52 99-35" fill="none" stroke="#ffffff" stroke-width="15" stroke-linecap="round" opacity="0.66"/>
+  <path d="M199 366h114l22 54H177l22-54z" fill="#251052" stroke="#fde68a" stroke-width="10" stroke-linejoin="round"/>
+</svg>
