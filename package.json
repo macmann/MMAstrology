@@ -1,17 +1,19 @@
 {
   "scripts": {
     "dev": "next dev",
-    "build": "prisma db push && prisma db seed && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "npx prisma generate",
     "prisma:repair": "node scripts/repair-prisma-client.mjs",
-    "prisma:migrate": "prisma migrate dev",
-    "predev": "prisma generate",
-    "prebuild": "prisma generate",
-    "postinstall": "prisma generate",
-    "prisma:reset": "prisma migrate reset",
-    "prisma:seed": "prisma db seed"
+    "prisma:migrate": "npx prisma migrate dev",
+    "predev": "npx prisma generate",
+    "prebuild": "npx prisma generate",
+    "postinstall": "npx prisma generate",
+    "prisma:reset": "npx prisma migrate reset",
+    "prisma:seed": "npx prisma db seed",
+    "render:build": "npm run prisma:deploy && npm run build",
+    "prisma:deploy": "npx prisma migrate deploy && npx prisma db seed"
   },
   "dependencies": {
     "@prisma/client": "6",
