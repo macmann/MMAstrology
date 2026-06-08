@@ -27,6 +27,11 @@ type ChatInterfaceProps = {
 };
 
 const LIMIT_MESSAGE = "Daily limit reached. Resets at midnight. Contact Admin to Top Up.";
+const THINKING_MESSAGE_TEMPLATES = [
+  (providerName: string) => `${providerName} is reading the stars…`,
+  (providerName: string) => `${providerName} is looking at the charts…`,
+  (providerName: string) => `${providerName} is thinking…`,
+];
 
 function getTotalCredits(credits: Credits | null) {
   if (!credits) {
@@ -38,6 +43,12 @@ function getTotalCredits(credits: Credits | null) {
 
 function createLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getRandomThinkingMessage(providerName: string) {
+  const template = THINKING_MESSAGE_TEMPLATES[Math.floor(Math.random() * THINKING_MESSAGE_TEMPLATES.length)];
+
+  return template(providerName);
 }
 
 function isMarkdownBlockStart(line: string) {
@@ -100,6 +111,23 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   }
 
   return nodes;
+}
+
+function ThinkingLoader({ message }: { message: string }) {
+  return (
+    <div className="flex items-center gap-2 text-violet-50">
+      <span className="relative flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+        <span className="absolute h-5 w-5 animate-ping rounded-full bg-amber-200/25" />
+        <span className="flex h-5 w-5 animate-spin items-center justify-center rounded-full border border-amber-200/40 border-t-amber-200 text-[0.65rem] text-amber-100">✦</span>
+      </span>
+      <span>{message}</span>
+      <span className="flex items-end gap-0.5" aria-hidden="true">
+        <span className="h-1 w-1 animate-bounce rounded-full bg-amber-200 [animation-delay:-0.2s]" />
+        <span className="h-1 w-1 animate-bounce rounded-full bg-amber-200 [animation-delay:-0.1s]" />
+        <span className="h-1 w-1 animate-bounce rounded-full bg-amber-200" />
+      </span>
+    </div>
+  );
 }
 
 function MarkdownMessage({ content }: { content: string }) {
@@ -308,7 +336,7 @@ export function ChatInterface({
     const loadingMessage: ChatMessage = {
       id: createLocalId("assistant-loading"),
       role: "assistant",
-      content: `${providerName} is reading the stars…`,
+      content: getRandomThinkingMessage(providerName),
       status: "sending",
     };
 
@@ -326,11 +354,11 @@ export function ChatInterface({
         credentials: "same-origin",
         body: JSON.stringify({ providerName, message: trimmedMessage }),
       });
-      const data = await response.json();
 
       if (response.status === 403) {
+        const data = await response.json().catch(() => null);
         setIsOutOfCredits(true);
-        setErrorMessage(LIMIT_MESSAGE);
+        setErrorMessage(typeof data?.error === "string" ? data.error : LIMIT_MESSAGE);
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
             message.id === localUserMessage.id ? { ...message, status: "error" as const } : message,
@@ -340,32 +368,98 @@ export function ChatInterface({
       }
 
       if (!response.ok) {
+        const data = await response.json().catch(() => null);
         throw new Error(typeof data?.error === "string" ? data.error : "The chat request failed.");
       }
 
-      if (data.credits) {
-        setCredits(data.credits);
-        setIsOutOfCredits(getTotalCredits(data.credits) === 0);
+      if (!response.body) {
+        throw new Error("The chat response could not be streamed.");
       }
 
       setMessages((currentMessages) =>
-        currentMessages.map((message) => {
-          if (message.id === localUserMessage.id) {
-            return { ...message, status: "sent" as const };
-          }
-
-          if (message.id === loadingMessage.id) {
-            return {
-              id: createLocalId("assistant"),
-              role: "assistant",
-              content: typeof data.message === "string" ? data.message : "I could not read a clear answer this time.",
-              status: "sent" as const,
-            };
-          }
-
-          return message;
-        }),
+        currentMessages.map((message) =>
+          message.id === localUserMessage.id ? { ...message, status: "sent" as const } : message,
+        ),
       );
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let streamedContent = "";
+
+      const handleStreamEvent = (eventBlock: string) => {
+        const eventType = eventBlock.match(/^event: (.+)$/m)?.[1] ?? "message";
+        const dataLines = eventBlock
+          .split("\n")
+          .filter((line) => line.startsWith("data: "))
+          .map((line) => line.slice(6));
+
+        if (dataLines.length === 0) {
+          return;
+        }
+
+        const payload = JSON.parse(dataLines.join("\n"));
+
+        if (eventType === "delta" && typeof payload.content === "string") {
+          streamedContent += payload.content;
+          setMessages((currentMessages) =>
+            currentMessages.map((message) =>
+              message.id === loadingMessage.id
+                ? { ...message, id: loadingMessage.id, content: streamedContent, status: "sent" as const }
+                : message,
+            ),
+          );
+        }
+
+        if (eventType === "done") {
+          if (payload.credits) {
+            setCredits(payload.credits);
+            setIsOutOfCredits(getTotalCredits(payload.credits) === 0);
+          }
+        }
+
+        if (eventType === "error") {
+          throw new Error(typeof payload.error === "string" ? payload.error : "The chat request failed.");
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+
+        let eventBoundary = buffer.indexOf("\n\n");
+
+        while (eventBoundary !== -1) {
+          const eventBlock = buffer.slice(0, eventBoundary).trim();
+          buffer = buffer.slice(eventBoundary + 2);
+
+          if (eventBlock) {
+            handleStreamEvent(eventBlock);
+          }
+
+          eventBoundary = buffer.indexOf("\n\n");
+        }
+
+        if (done) {
+          const remainingEventBlock = buffer.trim();
+
+          if (remainingEventBlock) {
+            handleStreamEvent(remainingEventBlock);
+          }
+
+          break;
+        }
+      }
+
+      if (!streamedContent.trim()) {
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === loadingMessage.id
+              ? { ...message, content: "I could not read a clear answer this time.", status: "sent" as const }
+              : message,
+          ),
+        );
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "The chat request failed.");
       setMessages((currentMessages) =>
@@ -452,10 +546,11 @@ export function ChatInterface({
                             : "rounded-bl-md border border-white/10 bg-white/10 text-violet-50 shadow-violet-950/20"
                         } ${message.status === "error" ? "border border-rose-300/50 bg-rose-500/20" : ""}`}
                       >
-                        <MarkdownMessage content={message.content} />
-                        {message.status === "sending" ? (
-                          <p className="mt-2 text-xs font-bold text-violet-100/65">Sending…</p>
-                        ) : null}
+                        {!isUser && message.status === "sending" ? (
+                          <ThinkingLoader message={message.content} />
+                        ) : (
+                          <MarkdownMessage content={message.content} />
+                        )}
                         {message.status === "error" ? (
                           <p className="mt-2 text-xs font-bold text-rose-100">Not sent</p>
                         ) : null}
@@ -489,7 +584,7 @@ export function ChatInterface({
                   disabled={isInputDisabled || !inputValue.trim()}
                   className="rounded-2xl bg-gradient-to-r from-amber-200 to-fuchsia-300 px-5 py-3 text-sm font-black text-[#160b2f] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-700 disabled:text-slate-400"
                 >
-                  {isSending ? "Sending" : "Send"}
+                  {isSending ? "Reading…" : "Send"}
                 </button>
               </div>
               <p className="mt-2 text-xs text-violet-100/65">
