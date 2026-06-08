@@ -60,3 +60,30 @@ export async function GET() {
     })),
   });
 }
+
+export async function DELETE(request: Request) {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    return NextResponse.json({ error: "You must be logged in to delete chat history." }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const providerName = searchParams.get("providerName")?.trim();
+
+  if (!providerName) {
+    return NextResponse.json({ error: "providerName is required." }, { status: 400 });
+  }
+
+  const result = await prisma.message.deleteMany({
+    where: {
+      userId: session.userId,
+      providerName,
+    },
+  });
+
+  return NextResponse.json({
+    providerName,
+    deletedCount: result.count,
+  });
+}
