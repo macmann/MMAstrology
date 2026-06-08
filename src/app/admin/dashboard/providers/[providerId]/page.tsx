@@ -48,15 +48,18 @@ export default async function ProviderDetailsPage({ params }: { params: Promise<
     const systemPrompt = String(formData.get("systemPrompt") ?? "").trim();
     const isActive = formData.get("isActive") === "on";
 
-    await prisma.providerConfig.update({
+    const updatedProvider = await prisma.providerConfig.update({
       where: { id: actionProviderId },
       data: {
         isActive,
         systemPrompt,
       },
+      select: { name: true },
     });
 
     revalidatePath("/admin/dashboard");
+    revalidatePath("/dashboard");
+    revalidatePath(`/chat/${encodeURIComponent(updatedProvider.name)}`);
     revalidatePath(`/admin/dashboard/providers/${actionProviderId}`);
   }
 

@@ -165,6 +165,33 @@ export default async function AdminDashboardPage() {
     revalidatePath("/admin/dashboard");
   }
 
+  async function setProviderAvailability(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+
+    const providerId = String(formData.get("providerId") ?? "").trim();
+    const isActive = formData.get("isActive") === "true";
+
+    if (!providerId) {
+      return;
+    }
+
+    const provider = await prisma.providerConfig.update({
+      where: { id: providerId },
+      data: { isActive },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/dashboard");
+    revalidatePath(`/chat/${encodeURIComponent(provider.name)}`);
+    revalidatePath(`/admin/dashboard/providers/${provider.id}`);
+  }
+
   const [userCount, bannedUserCount, providerConfigs, users] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { isBanned: true } }),
@@ -271,7 +298,7 @@ export default async function AdminDashboardPage() {
               <p className="text-sm font-medium uppercase tracking-[0.25em] text-slate-500">Provider configuration</p>
               <h2 className="mt-2 text-2xl font-bold text-white">Default astrology providers</h2>
               <p className="mt-2 text-sm leading-6 text-violet-100/70">
-                Every provider card links to a full edit page where you can update availability and system prompt instructions.
+                Toggle provider availability instantly for all users, or open a provider card to edit its system prompt instructions.
               </p>
             </div>
           </div>
@@ -297,12 +324,28 @@ export default async function AdminDashboardPage() {
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-violet-100/75">{getPromptPreview(provider.systemPrompt)}</p>
                     <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">Updated {provider.updatedAt.toISOString().slice(0, 10)}</p>
                   </div>
-                  <Link
-                    href={`/admin/dashboard/providers/${provider.id}`}
-                    className="shrink-0 rounded-full border border-amber-200/25 bg-amber-200 px-4 py-2 text-center text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
-                  >
-                    Configure
-                  </Link>
+                  <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                    <form action={setProviderAvailability}>
+                      <input type="hidden" name="providerId" value={provider.id} />
+                      <input type="hidden" name="isActive" value={provider.isActive ? "false" : "true"} />
+                      <button
+                        type="submit"
+                        className={`w-full rounded-full border px-4 py-2 text-center text-sm font-black transition sm:w-auto ${
+                          provider.isActive
+                            ? "border-rose-200/25 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
+                            : "border-amber-200/25 bg-amber-200 text-[#160b2f] hover:bg-amber-100"
+                        }`}
+                      >
+                        {provider.isActive ? "Disable" : "Enable"}
+                      </button>
+                    </form>
+                    <Link
+                      href={`/admin/dashboard/providers/${provider.id}`}
+                      className="w-full rounded-full border border-amber-200/25 px-4 py-2 text-center text-sm font-black text-amber-100 transition hover:bg-amber-200 hover:text-[#160b2f] sm:w-auto"
+                    >
+                      Configure
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
