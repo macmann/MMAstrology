@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { languageOptions, useLocalization, type Language } from "@/lib/localization";
 
 type ProfileTab = "account" | "credits";
 
@@ -52,6 +53,7 @@ function formatLedgerDate(value: string) {
 }
 
 export function ProfileClient() {
+  const { language, setLanguage, t } = useLocalization();
   const [activeTab, setActiveTab] = useState<ProfileTab>("account");
   const [profileData, setProfileData] = useState<ProfilePayload | null>(null);
   const [name, setName] = useState("");
@@ -155,7 +157,7 @@ export function ProfileClient() {
         : current,
     );
     setName(payload.user.name ?? "");
-    setToast("Profile updated successfully.");
+    setToast(t("profile.updated"));
     setIsSavingAccount(false);
   }
 
@@ -165,7 +167,7 @@ export function ProfileClient() {
     setToast("");
 
     if (newPassword !== confirmPassword) {
-      setError("New password and confirmation must match.");
+      setError(t("profile.passwordMismatch"));
       return;
     }
 
@@ -186,7 +188,7 @@ export function ProfileClient() {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setToast("Password updated successfully.");
+    setToast(t("profile.passwordUpdated"));
     setIsSavingPassword(false);
   }
 
@@ -194,6 +196,12 @@ export function ProfileClient() {
   const ledger = user?.creditTransactions ?? [];
   const totalCredits = (user?.dailyFreeCredits ?? 0) + (user?.purchasedCredits ?? 0);
   const displayName = user?.name?.trim() || user?.email || "Your profile";
+
+  function handleLanguageChange(nextLanguage: Language) {
+    setLanguage(nextLanguage);
+    const selectedLanguage = languageOptions.find((option) => option.value === nextLanguage)?.label ?? nextLanguage;
+    setToast(t("profile.languageSaved", { language: selectedLanguage }));
+  }
 
   return (
     <div className="relative min-h-full overflow-hidden pb-8">
@@ -210,15 +218,15 @@ export function ProfileClient() {
         <header className="rounded-[2rem] border border-white/15 bg-white/[0.08] p-5 shadow-2xl shadow-violet-950/30 backdrop-blur-xl">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">Profile</p>
-              <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">Your cosmic account</h1>
+              <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">{t("profile.eyebrow")}</p>
+              <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">{t("profile.title")}</h1>
             </div>
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-amber-200/20 bg-amber-200 text-sm font-black text-[#160b2f]">
               {isLoading ? "…" : displayName.slice(0, 2).toUpperCase()}
             </div>
           </div>
           <p className="mt-4 text-sm leading-6 text-violet-100/80">
-            Manage your name, password, birth profile, and credit balance from one place.
+            {t("profile.subtitle")}
           </p>
         </header>
 
@@ -234,7 +242,7 @@ export function ProfileClient() {
                 activeTab === tab ? "bg-amber-200 text-[#160b2f] shadow-lg shadow-amber-950/20" : "text-violet-100/65 hover:bg-white/10 hover:text-white"
               }`}
             >
-              {tab}
+              {tab === "account" ? t("profile.account") : t("profile.credits")}
             </button>
           ))}
         </div>
@@ -247,44 +255,67 @@ export function ProfileClient() {
                   {isLoading ? "…" : displayName.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-100/60">Signed in as</p>
-                  <h2 className="truncate text-xl font-black text-amber-100">{isLoading ? "Loading..." : displayName}</h2>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-100/60">{t("profile.signedInAs")}</p>
+                  <h2 className="truncate text-xl font-black text-amber-100">{isLoading ? t("common.loading") : displayName}</h2>
                   <p className="mt-1 truncate text-sm font-semibold text-violet-100/60">{user?.email}</p>
                 </div>
               </div>
             </section>
 
+            <section className="cosmic-card space-y-4">
+              <div className="relative">
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">{t("profile.languageEyebrow")}</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">{t("profile.languageTitle")}</h2>
+                <p className="mt-2 text-sm leading-6 text-violet-100/70">{t("profile.languageDescription")}</p>
+              </div>
+              <div className="relative grid grid-cols-2 gap-2 rounded-[1.35rem] border border-white/10 bg-[#07051a]/45 p-2">
+                {languageOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleLanguageChange(option.value)}
+                    aria-pressed={language === option.value}
+                    className={`rounded-[1rem] px-4 py-3 text-sm font-black transition ${
+                      language === option.value ? "bg-amber-200 text-[#160b2f] shadow-lg shadow-amber-950/20" : "text-violet-100/70 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <form onSubmit={handleAccountSubmit} className="cosmic-form">
               <div className="relative">
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Account details</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Name & birth profile</h2>
-                <p className="mt-2 text-sm leading-6 text-violet-100/70">Update the name shown in your profile and your saved natal information.</p>
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">{t("profile.accountDetails")}</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">{t("profile.nameBirthTitle")}</h2>
+                <p className="mt-2 text-sm leading-6 text-violet-100/70">{t("profile.accountDescription")}</p>
               </div>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                Name
-                <input value={name} onChange={(event) => setName(event.target.value)} name="name" type="text" autoComplete="name" placeholder="Your name" disabled={isLoading || isSavingAccount} className="cosmic-input" />
+                {t("profile.name")}
+                <input value={name} onChange={(event) => setName(event.target.value)} name="name" type="text" autoComplete="name" placeholder={t("profile.namePlaceholder")} disabled={isLoading || isSavingAccount} className="cosmic-input" />
               </label>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                Date of birth
+                {t("profile.dob")}
                 <input value={dob} onChange={(event) => setDob(event.target.value)} name="dob" type="date" required disabled={isLoading || isSavingAccount} className="cosmic-input" />
               </label>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                Birth time
+                {t("profile.birthTime")}
                 <input value={birthTime} onChange={(event) => setBirthTime(event.target.value)} name="birthTime" type="time" required disabled={isLoading || isSavingAccount} className="cosmic-input" />
               </label>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                Birth location
+                {t("profile.birthLocation")}
                 <input
                   value={birthLocation}
                   onChange={(event) => setBirthLocation(event.target.value)}
                   name="birthLocation"
                   type="text"
                   autoComplete="address-level2"
-                  placeholder="City, state or country"
+                  placeholder={t("profile.birthLocationPlaceholder")}
                   required
                   disabled={isLoading || isSavingAccount}
                   className="cosmic-input"
@@ -292,34 +323,34 @@ export function ProfileClient() {
               </label>
 
               <button type="submit" disabled={isLoading || isSavingAccount || !accountHasChanges} className="cosmic-button">
-                {isSavingAccount ? "Saving changes..." : accountHasChanges ? "Save profile" : "Profile is current"}
+                {isSavingAccount ? t("profile.savingChanges") : accountHasChanges ? t("profile.saveProfile") : t("profile.current")}
               </button>
             </form>
 
             <form onSubmit={handlePasswordSubmit} className="cosmic-form">
               <div className="relative">
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Security</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Change password</h2>
-                <p className="mt-2 text-sm leading-6 text-violet-100/70">Confirm your current password before saving a new one.</p>
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">{t("profile.security")}</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">{t("profile.changePassword")}</h2>
+                <p className="mt-2 text-sm leading-6 text-violet-100/70">{t("profile.changePasswordDescription")}</p>
               </div>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                Current password
+                {t("profile.currentPassword")}
                 <input value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} name="currentPassword" type="password" autoComplete="current-password" required disabled={isSavingPassword} className="cosmic-input" />
               </label>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                New password
+                {t("profile.newPassword")}
                 <input value={newPassword} onChange={(event) => setNewPassword(event.target.value)} name="newPassword" type="password" autoComplete="new-password" minLength={8} required disabled={isSavingPassword} className="cosmic-input" />
               </label>
 
               <label className="relative block text-sm font-bold text-slate-300">
-                Confirm new password
+                {t("profile.confirmPassword")}
                 <input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} name="confirmPassword" type="password" autoComplete="new-password" minLength={8} required disabled={isSavingPassword} className="cosmic-input" />
               </label>
 
               <button type="submit" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword} className="cosmic-button">
-                {isSavingPassword ? "Updating password..." : "Update password"}
+                {isSavingPassword ? t("profile.updatingPassword") : t("profile.updatePassword")}
               </button>
             </form>
           </div>
@@ -329,23 +360,23 @@ export function ProfileClient() {
               <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-amber-200/25 blur-2xl" />
               <div className="relative flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-200/80">Credit balance</p>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-200/80">{t("profile.creditBalance")}</p>
                   <p className="mt-2 text-4xl font-black leading-none tracking-tight text-white">{isLoading ? "—" : totalCredits}</p>
-                  <p className="mt-2 text-xs font-semibold text-violet-100/60">Ready for this session.</p>
+                  <p className="mt-2 text-xs font-semibold text-violet-100/60">{t("profile.ready")}</p>
                 </div>
                 <div className="rounded-[1.4rem] border border-amber-200/20 bg-amber-100/10 p-3 text-center text-white">
-                  <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-amber-200">Daily</p>
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-amber-200">{t("profile.daily")}</p>
                   <p className="mt-1 text-lg font-black">{isLoading ? "—" : `${user?.dailyFreeCredits ?? 0}/${FREE_CREDIT_ALLOWANCE}`}</p>
                 </div>
               </div>
               <div className="relative mt-5 grid grid-cols-2 gap-3 text-sm font-bold">
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-3 text-violet-100/80">
-                  <span className="block text-xs uppercase tracking-[0.16em] text-violet-100/50">Free</span>
-                  {isLoading ? "—" : user?.dailyFreeCredits} credits
+                  <span className="block text-xs uppercase tracking-[0.16em] text-violet-100/50">{t("profile.free")}</span>
+                  {isLoading ? "—" : user?.dailyFreeCredits} {t("profile.creditsWord")}
                 </div>
                 <div className="rounded-2xl border border-fuchsia-200/20 bg-fuchsia-400/10 p-3 text-fuchsia-100">
-                  <span className="block text-xs uppercase tracking-[0.16em] text-fuchsia-200/70">Purchased</span>
-                  {isLoading ? "—" : user?.purchasedCredits} credits
+                  <span className="block text-xs uppercase tracking-[0.16em] text-fuchsia-200/70">{t("profile.purchased")}</span>
+                  {isLoading ? "—" : user?.purchasedCredits} {t("profile.creditsWord")}
                 </div>
               </div>
             </section>
@@ -353,25 +384,25 @@ export function ProfileClient() {
             <section className="cosmic-card h-[31rem]">
               <div className="relative mb-4 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Transaction ledger</p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Credit additions</h2>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">{t("profile.transactionLedger")}</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-white">{t("profile.creditAdditions")}</h2>
                 </div>
-                <span className="cosmic-chip">{ledger.length} logs</span>
+                <span className="cosmic-chip">{t("profile.logs", { count: ledger.length })}</span>
               </div>
 
               <div className="absolute inset-x-5 bottom-5 top-28 overflow-y-auto rounded-[1.5rem] border border-white/10 bg-[#07051a]/45 p-3 shadow-inner shadow-black/30">
                 {isLoading ? (
-                  <div className="flex h-full items-center justify-center text-sm font-semibold text-violet-100/65">Loading ledger...</div>
+                  <div className="flex h-full items-center justify-center text-sm font-semibold text-violet-100/65">{t("profile.loadingLedger")}</div>
                 ) : ledger.length ? (
                   <ol className="space-y-3">
                     {ledger.map((transaction) => (
                       <li key={transaction.id} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-black text-white">+{transaction.amount} purchased credits</p>
+                            <p className="text-sm font-black text-white">{t("profile.purchasedCredits", { amount: transaction.amount })}</p>
                             <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-100/65">{formatLedgerDate(transaction.createdAt)}</p>
                           </div>
-                          <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-black text-emerald-100">Added</span>
+                          <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-black text-emerald-100">{t("common.added")}</span>
                         </div>
                         <p className="mt-3 text-sm leading-6 text-violet-100/75">{transaction.reason}</p>
                       </li>
@@ -379,7 +410,7 @@ export function ProfileClient() {
                   </ol>
                 ) : (
                   <div className="flex h-full items-center justify-center px-6 text-center text-sm font-semibold leading-6 text-violet-100/65">
-                    No purchased-credit additions have been recorded yet.
+                    {t("profile.noLedger")}
                   </div>
                 )}
               </div>

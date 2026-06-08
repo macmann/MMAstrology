@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { LocalizationProvider } from "@/lib/localization";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,8 +37,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
-        {children}
-        <ServiceWorkerRegistration />
+        <LocalizationProvider>
+          {children}
+          <ServiceWorkerRegistration />
+        </LocalizationProvider>
       </body>
     </html>
   );
