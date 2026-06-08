@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+type ProfileTab = "account" | "credits";
+
 type AstrologicalProfile = {
   id: string;
   userId: string;
@@ -20,6 +22,7 @@ type CreditTransaction = {
 type ProfilePayload = {
   user: {
     id: string;
+    name: string | null;
     email: string;
     role: string;
     dailyFreeCredits: number;
@@ -31,6 +34,8 @@ type ProfilePayload = {
     creditTransactions: CreditTransaction[];
   };
 };
+
+const FREE_CREDIT_ALLOWANCE = 4;
 
 function toDateInputValue(value?: string) {
   return value ? value.slice(0, 10) : "";
@@ -47,12 +52,18 @@ function formatLedgerDate(value: string) {
 }
 
 export function ProfileClient() {
+  const [activeTab, setActiveTab] = useState<ProfileTab>("account");
   const [profileData, setProfileData] = useState<ProfilePayload | null>(null);
+  const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [birthTime, setBirthTime] = useState("");
   const [birthLocation, setBirthLocation] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
@@ -78,6 +89,7 @@ export function ProfileClient() {
 
       const nextData = payload as ProfilePayload;
       setProfileData(nextData);
+      setName(nextData.user.name ?? "");
       setDob(toDateInputValue(nextData.user.astrologicalProfile?.dob));
       setBirthTime(nextData.user.astrologicalProfile?.birthTime ?? "");
       setBirthLocation(nextData.user.astrologicalProfile?.birthLocation ?? "");
@@ -100,32 +112,33 @@ export function ProfileClient() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const hasChanges = useMemo(() => {
+  const accountHasChanges = useMemo(() => {
     const currentProfile = profileData?.user.astrologicalProfile;
 
     return (
+      name !== (profileData?.user.name ?? "") ||
       dob !== toDateInputValue(currentProfile?.dob) ||
       birthTime !== (currentProfile?.birthTime ?? "") ||
       birthLocation !== (currentProfile?.birthLocation ?? "")
     );
-  }, [birthLocation, birthTime, dob, profileData]);
+  }, [birthLocation, birthTime, dob, name, profileData]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleAccountSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setToast("");
-    setIsSaving(true);
+    setIsSavingAccount(true);
 
     const response = await fetch("/api/user/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dob, birthTime, birthLocation }),
+      body: JSON.stringify({ name, dob, birthTime, birthLocation }),
     });
     const payload = await response.json();
 
     if (!response.ok) {
       setError(payload.error ?? "Unable to update your profile.");
-      setIsSaving(false);
+      setIsSavingAccount(false);
       return;
     }
 
@@ -134,17 +147,53 @@ export function ProfileClient() {
         ? {
             user: {
               ...current.user,
+              name: payload.user.name,
+              updatedAt: payload.user.updatedAt,
               astrologicalProfile: payload.profile,
             },
           }
         : current,
     );
-    setToast("Birth details updated successfully.");
-    setIsSaving(false);
+    setName(payload.user.name ?? "");
+    setToast("Profile updated successfully.");
+    setIsSavingAccount(false);
+  }
+
+  async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setToast("");
+
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirmation must match.");
+      return;
+    }
+
+    setIsSavingPassword(true);
+    const response = await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      setError(payload.error ?? "Unable to update your password.");
+      setIsSavingPassword(false);
+      return;
+    }
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setToast("Password updated successfully.");
+    setIsSavingPassword(false);
   }
 
   const user = profileData?.user;
   const ledger = user?.creditTransactions ?? [];
+  const totalCredits = (user?.dailyFreeCredits ?? 0) + (user?.purchasedCredits ?? 0);
+  const displayName = user?.name?.trim() || user?.email || "Your profile";
 
   return (
     <div className="relative min-h-full overflow-hidden pb-8">
@@ -159,108 +208,184 @@ export function ProfileClient() {
 
       <div className="relative space-y-5 px-5 py-6">
         <header className="rounded-[2rem] border border-white/15 bg-white/[0.08] p-5 shadow-2xl shadow-violet-950/30 backdrop-blur-xl">
-          <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">Profile</p>
-          <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">Your cosmic account</h1>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">Profile</p>
+              <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">Your cosmic account</h1>
+            </div>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-amber-200/20 bg-amber-200 text-sm font-black text-[#160b2f]">
+              {isLoading ? "…" : displayName.slice(0, 2).toUpperCase()}
+            </div>
+          </div>
           <p className="mt-4 text-sm leading-6 text-violet-100/80">
-            Manage your birth profile and review every manual purchased-credit addition recorded on your account.
+            Manage your name, password, birth profile, and credit balance from one place.
           </p>
         </header>
 
         {error ? <p className="rounded-2xl border border-rose-200/30 bg-rose-400/15 p-3 text-sm font-semibold text-rose-50">{error}</p> : null}
 
-        <section className="cosmic-card space-y-4">
-          <div className="relative flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-3xl shadow-lg shadow-fuchsia-950/30">
-              ☾
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-100/60">Registered email</p>
-              <h2 className="truncate text-xl font-black text-amber-100">{isLoading ? "Loading..." : user?.email}</h2>
-            </div>
-          </div>
-          <div className="relative grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-100/55">Free</p>
-              <p className="mt-2 text-3xl font-black text-white">{isLoading ? "—" : user?.dailyFreeCredits}</p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-100/55">Purchased</p>
-              <p className="mt-2 text-3xl font-black text-white">{isLoading ? "—" : user?.purchasedCredits}</p>
-            </div>
-          </div>
-        </section>
+        <div className="grid grid-cols-2 gap-2 rounded-[1.6rem] border border-white/10 bg-[#07051a]/45 p-2 shadow-inner shadow-black/20">
+          {(["account", "credits"] as ProfileTab[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`rounded-[1.15rem] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] transition ${
+                activeTab === tab ? "bg-amber-200 text-[#160b2f] shadow-lg shadow-amber-950/20" : "text-violet-100/65 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
 
-        <form onSubmit={handleSubmit} className="cosmic-form">
-          <div className="relative">
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Birth details</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Astrological profile</h2>
-            <p className="mt-2 text-sm leading-6 text-violet-100/70">Update your saved natal information anytime.</p>
-          </div>
-
-          <label className="relative block text-sm font-bold text-slate-300">
-            Date of birth
-            <input value={dob} onChange={(event) => setDob(event.target.value)} name="dob" type="date" required disabled={isLoading || isSaving} className="cosmic-input" />
-          </label>
-
-          <label className="relative block text-sm font-bold text-slate-300">
-            Birth time
-            <input value={birthTime} onChange={(event) => setBirthTime(event.target.value)} name="birthTime" type="time" required disabled={isLoading || isSaving} className="cosmic-input" />
-          </label>
-
-          <label className="relative block text-sm font-bold text-slate-300">
-            Birth location
-            <input
-              value={birthLocation}
-              onChange={(event) => setBirthLocation(event.target.value)}
-              name="birthLocation"
-              type="text"
-              autoComplete="address-level2"
-              placeholder="City, state or country"
-              required
-              disabled={isLoading || isSaving}
-              className="cosmic-input"
-            />
-          </label>
-
-          <button type="submit" disabled={isLoading || isSaving || !hasChanges} className="cosmic-button">
-            {isSaving ? "Saving changes..." : hasChanges ? "Save birth details" : "Birth details are current"}
-          </button>
-        </form>
-
-        <section className="cosmic-card h-[31rem]">
-          <div className="relative mb-4 flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Transaction Ledger</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Credit additions</h2>
-            </div>
-            <span className="cosmic-chip">{ledger.length} logs</span>
-          </div>
-
-          <div className="absolute inset-x-5 bottom-5 top-28 overflow-y-auto rounded-[1.5rem] border border-white/10 bg-[#07051a]/45 p-3 shadow-inner shadow-black/30">
-            {isLoading ? (
-              <div className="flex h-full items-center justify-center text-sm font-semibold text-violet-100/65">Loading ledger...</div>
-            ) : ledger.length ? (
-              <ol className="space-y-3">
-                {ledger.map((transaction) => (
-                  <li key={transaction.id} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-black text-white">+{transaction.amount} purchased credits</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-100/65">{formatLedgerDate(transaction.createdAt)}</p>
-                      </div>
-                      <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-black text-emerald-100">Added</span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-violet-100/75">{transaction.reason}</p>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <div className="flex h-full items-center justify-center px-6 text-center text-sm font-semibold leading-6 text-violet-100/65">
-                No purchased-credit additions have been recorded yet.
+        {activeTab === "account" ? (
+          <div className="space-y-5">
+            <section className="cosmic-card space-y-4">
+              <div className="relative flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-3xl font-black text-[#160b2f] shadow-lg shadow-fuchsia-950/30">
+                  {isLoading ? "…" : displayName.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-100/60">Signed in as</p>
+                  <h2 className="truncate text-xl font-black text-amber-100">{isLoading ? "Loading..." : displayName}</h2>
+                  <p className="mt-1 truncate text-sm font-semibold text-violet-100/60">{user?.email}</p>
+                </div>
               </div>
-            )}
+            </section>
+
+            <form onSubmit={handleAccountSubmit} className="cosmic-form">
+              <div className="relative">
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Account details</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Name & birth profile</h2>
+                <p className="mt-2 text-sm leading-6 text-violet-100/70">Update the name shown in your profile and your saved natal information.</p>
+              </div>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                Name
+                <input value={name} onChange={(event) => setName(event.target.value)} name="name" type="text" autoComplete="name" placeholder="Your name" disabled={isLoading || isSavingAccount} className="cosmic-input" />
+              </label>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                Date of birth
+                <input value={dob} onChange={(event) => setDob(event.target.value)} name="dob" type="date" required disabled={isLoading || isSavingAccount} className="cosmic-input" />
+              </label>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                Birth time
+                <input value={birthTime} onChange={(event) => setBirthTime(event.target.value)} name="birthTime" type="time" required disabled={isLoading || isSavingAccount} className="cosmic-input" />
+              </label>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                Birth location
+                <input
+                  value={birthLocation}
+                  onChange={(event) => setBirthLocation(event.target.value)}
+                  name="birthLocation"
+                  type="text"
+                  autoComplete="address-level2"
+                  placeholder="City, state or country"
+                  required
+                  disabled={isLoading || isSavingAccount}
+                  className="cosmic-input"
+                />
+              </label>
+
+              <button type="submit" disabled={isLoading || isSavingAccount || !accountHasChanges} className="cosmic-button">
+                {isSavingAccount ? "Saving changes..." : accountHasChanges ? "Save profile" : "Profile is current"}
+              </button>
+            </form>
+
+            <form onSubmit={handlePasswordSubmit} className="cosmic-form">
+              <div className="relative">
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Security</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Change password</h2>
+                <p className="mt-2 text-sm leading-6 text-violet-100/70">Confirm your current password before saving a new one.</p>
+              </div>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                Current password
+                <input value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} name="currentPassword" type="password" autoComplete="current-password" required disabled={isSavingPassword} className="cosmic-input" />
+              </label>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                New password
+                <input value={newPassword} onChange={(event) => setNewPassword(event.target.value)} name="newPassword" type="password" autoComplete="new-password" minLength={8} required disabled={isSavingPassword} className="cosmic-input" />
+              </label>
+
+              <label className="relative block text-sm font-bold text-slate-300">
+                Confirm new password
+                <input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} name="confirmPassword" type="password" autoComplete="new-password" minLength={8} required disabled={isSavingPassword} className="cosmic-input" />
+              </label>
+
+              <button type="submit" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword} className="cosmic-button">
+                {isSavingPassword ? "Updating password..." : "Update password"}
+              </button>
+            </form>
           </div>
-        </section>
+        ) : (
+          <div className="space-y-5">
+            <section className="cosmic-card">
+              <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-amber-200/25 blur-2xl" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-200/80">Credit balance</p>
+                  <p className="mt-2 text-4xl font-black leading-none tracking-tight text-white">{isLoading ? "—" : totalCredits}</p>
+                  <p className="mt-2 text-xs font-semibold text-violet-100/60">Ready for this session.</p>
+                </div>
+                <div className="rounded-[1.4rem] border border-amber-200/20 bg-amber-100/10 p-3 text-center text-white">
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-amber-200">Daily</p>
+                  <p className="mt-1 text-lg font-black">{isLoading ? "—" : `${user?.dailyFreeCredits ?? 0}/${FREE_CREDIT_ALLOWANCE}`}</p>
+                </div>
+              </div>
+              <div className="relative mt-5 grid grid-cols-2 gap-3 text-sm font-bold">
+                <div className="rounded-2xl border border-white/10 bg-white/10 p-3 text-violet-100/80">
+                  <span className="block text-xs uppercase tracking-[0.16em] text-violet-100/50">Free</span>
+                  {isLoading ? "—" : user?.dailyFreeCredits} credits
+                </div>
+                <div className="rounded-2xl border border-fuchsia-200/20 bg-fuchsia-400/10 p-3 text-fuchsia-100">
+                  <span className="block text-xs uppercase tracking-[0.16em] text-fuchsia-200/70">Purchased</span>
+                  {isLoading ? "—" : user?.purchasedCredits} credits
+                </div>
+              </div>
+            </section>
+
+            <section className="cosmic-card h-[31rem]">
+              <div className="relative mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Transaction ledger</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-white">Credit additions</h2>
+                </div>
+                <span className="cosmic-chip">{ledger.length} logs</span>
+              </div>
+
+              <div className="absolute inset-x-5 bottom-5 top-28 overflow-y-auto rounded-[1.5rem] border border-white/10 bg-[#07051a]/45 p-3 shadow-inner shadow-black/30">
+                {isLoading ? (
+                  <div className="flex h-full items-center justify-center text-sm font-semibold text-violet-100/65">Loading ledger...</div>
+                ) : ledger.length ? (
+                  <ol className="space-y-3">
+                    {ledger.map((transaction) => (
+                      <li key={transaction.id} className="rounded-2xl border border-white/10 bg-white/[0.07] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-black text-white">+{transaction.amount} purchased credits</p>
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-100/65">{formatLedgerDate(transaction.createdAt)}</p>
+                          </div>
+                          <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-black text-emerald-100">Added</span>
+                        </div>
+                        <p className="mt-3 text-sm leading-6 text-violet-100/75">{transaction.reason}</p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <div className="flex h-full items-center justify-center px-6 text-center text-sm font-semibold leading-6 text-violet-100/65">
+                    No purchased-credit additions have been recorded yet.
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );
