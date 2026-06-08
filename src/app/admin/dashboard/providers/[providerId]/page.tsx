@@ -64,7 +64,7 @@ export default async function ProviderDetailsPage({ params }: { params: Promise<
   }
 
   return (
-    <main className="cosmic-page px-4 py-10 text-slate-50 sm:px-6 lg:px-8">
+    <main className="cosmic-page cosmic-scroll-page px-4 py-10 text-slate-50 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
         <header className="rounded-[2rem] border border-white/15 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/30 backdrop-blur-xl sm:p-8">
           <Link href="/admin/dashboard" className="text-sm font-bold text-amber-200 hover:text-amber-100">

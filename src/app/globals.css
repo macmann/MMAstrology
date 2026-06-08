@@ -43,6 +43,10 @@ input {
     @apply h-dvh overflow-hidden bg-[#07051a] text-slate-50 sm:py-6;
   }
 
+  .cosmic-scroll-page {
+    @apply h-auto min-h-dvh overflow-x-hidden overflow-y-auto;
+  }
+
   .cosmic-shell {
     @apply mx-auto h-dvh max-w-[430px] overflow-hidden border-x border-white/10 bg-[#120b2d] shadow-2xl shadow-fuchsia-950/40 sm:h-[calc(100dvh-3rem)] sm:rounded-[2.25rem] sm:border;
     background:

@@ -233,7 +233,7 @@ export default async function AdminDashboardPage() {
   const totalPurchasedCredits = managedUsers.reduce((total, user) => total + user.purchasedCredits, 0);
 
   return (
-    <main className="cosmic-page px-4 py-10 text-slate-50 sm:px-6 lg:px-8">
+    <main className="cosmic-page cosmic-scroll-page px-4 py-10 text-slate-50 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <header className="rounded-[2rem] border border-white/15 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/30 backdrop-blur-xl sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-200">Admin command center</p>
