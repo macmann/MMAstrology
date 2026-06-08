@@ -73,7 +73,7 @@ export function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 z-30 -mx-5 mt-auto px-4 pb-4 pt-2" aria-label="Primary">
+    <nav className="z-30 -mx-5 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2" aria-label="Primary">
       <div className="grid grid-cols-4 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.68rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
