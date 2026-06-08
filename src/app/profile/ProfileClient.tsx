@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { LogoutButton } from "@/components/LogoutButton";
 import { languageOptions, useLocalization, type Language } from "@/lib/localization";
 
 type ProfileTab = "account" | "credits";
@@ -250,15 +251,22 @@ export function ProfileClient() {
         {activeTab === "account" ? (
           <div className="space-y-5">
             <section className="cosmic-card space-y-4">
-              <div className="relative flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-3xl font-black text-[#160b2f] shadow-lg shadow-fuchsia-950/30">
-                  {isLoading ? "…" : displayName.slice(0, 1).toUpperCase()}
+              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-3xl font-black text-[#160b2f] shadow-lg shadow-fuchsia-950/30">
+                    {isLoading ? "…" : displayName.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-100/60">{t("profile.signedInAs")}</p>
+                    <h2 className="truncate text-xl font-black text-amber-100">{isLoading ? t("common.loading") : displayName}</h2>
+                    <p className="mt-1 truncate text-sm font-semibold text-violet-100/60">{user?.email}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-100/60">{t("profile.signedInAs")}</p>
-                  <h2 className="truncate text-xl font-black text-amber-100">{isLoading ? t("common.loading") : displayName}</h2>
-                  <p className="mt-1 truncate text-sm font-semibold text-violet-100/60">{user?.email}</p>
-                </div>
+                <LogoutButton
+                  label={t("profile.logout")}
+                  pendingLabel={t("profile.loggingOut")}
+                  className="relative w-full rounded-full border border-rose-200/30 bg-rose-400/15 px-5 py-3 text-sm font-black text-rose-50 transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                />
               </div>
             </section>
 
