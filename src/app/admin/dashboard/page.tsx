@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoutButton } from "@/components/LogoutButton";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -244,8 +245,11 @@ export default async function AdminDashboardPage() {
                 Manage provider availability, system prompts, user access, manual credit adjustments, and destructive account actions from one place.
               </p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-[#100a29]/80 px-4 py-3 text-sm text-violet-100/75">
-              Signed in as <span className="font-black text-white">{session.email}</span>
+            <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#100a29]/80 px-4 py-3 text-sm text-violet-100/75 sm:flex-row sm:items-center">
+              <span>
+                Signed in as <span className="font-black text-white">{session.email}</span>
+              </span>
+              <LogoutButton className="rounded-full border border-rose-200/30 bg-rose-400/15 px-4 py-2 text-sm font-black text-rose-50 transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-60" />
             </div>
           </div>
         </header>
