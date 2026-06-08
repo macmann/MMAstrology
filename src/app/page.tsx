@@ -9,7 +9,7 @@ export default function HomePage() {
           <div className="absolute -left-20 bottom-6 h-52 w-52 rounded-full bg-fuchsia-400/20 blur-3xl" />
           <nav className="relative flex items-center justify-between">
             <Link href="/" className="text-lg font-black tracking-tight text-amber-100">
-              MMAstrology
+              AI Bay Din
             </Link>
             <Link href="/login" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-black text-white backdrop-blur transition hover:bg-white/20">
               Log in

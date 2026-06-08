@@ -3,17 +3,17 @@ import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistratio
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "MMAstrology",
+  applicationName: "AI Bay Din",
   title: {
-    default: "MMAstrology",
-    template: "%s | MMAstrology",
+    default: "AI Bay Din",
+    template: "%s | AI Bay Din",
   },
   description: "AI-powered astrology guidance for modern seekers.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "MMAstrology",
+    title: "AI Bay Din",
   },
   formatDetection: {
     telephone: false,
