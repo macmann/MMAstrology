@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useLocalization } from "@/lib/localization";
 
 type ChatMessage = {
   id: string;
@@ -26,12 +27,7 @@ type ChatInterfaceProps = {
   providerGradient: string;
 };
 
-const LIMIT_MESSAGE = "Daily limit reached. Resets at midnight. Contact Admin to Top Up.";
-const THINKING_MESSAGE_TEMPLATES = [
-  (providerName: string) => `${providerName} is reading the stars…`,
-  (providerName: string) => `${providerName} is looking at the charts…`,
-  (providerName: string) => `${providerName} is thinking…`,
-];
+const THINKING_MESSAGE_KEYS = ["chat.thinkingStars", "chat.thinkingCharts", "chat.thinking"] as const;
 
 function getTotalCredits(credits: Credits | null) {
   if (!credits) {
@@ -45,11 +41,6 @@ function createLocalId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function getRandomThinkingMessage(providerName: string) {
-  const template = THINKING_MESSAGE_TEMPLATES[Math.floor(Math.random() * THINKING_MESSAGE_TEMPLATES.length)];
-
-  return template(providerName);
-}
 
 function isMarkdownBlockStart(line: string) {
   return (
@@ -240,6 +231,7 @@ export function ChatInterface({
   providerSymbol,
   providerGradient,
 }: ChatInterfaceProps) {
+  const { t } = useLocalization();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -276,7 +268,7 @@ export function ChatInterface({
         }
 
         if (!response.ok) {
-          setErrorMessage(typeof data?.error === "string" ? data.error : "Could not load this conversation.");
+          setErrorMessage(typeof data?.error === "string" ? data.error : t("chat.loadError"));
           return;
         }
 
@@ -302,7 +294,7 @@ export function ChatInterface({
         }
       } catch {
         if (isMounted) {
-          setErrorMessage("Could not load this conversation. Please refresh and try again.");
+          setErrorMessage(t("chat.refreshError"));
         }
       } finally {
         if (isMounted) {
@@ -316,7 +308,7 @@ export function ChatInterface({
     return () => {
       isMounted = false;
     };
-  }, [providerName]);
+  }, [providerName, t]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -336,7 +328,7 @@ export function ChatInterface({
     const loadingMessage: ChatMessage = {
       id: createLocalId("assistant-loading"),
       role: "assistant",
-      content: getRandomThinkingMessage(providerName),
+      content: t(THINKING_MESSAGE_KEYS[Math.floor(Math.random() * THINKING_MESSAGE_KEYS.length)], { providerName }),
       status: "sending",
     };
 
@@ -358,7 +350,7 @@ export function ChatInterface({
       if (response.status === 403) {
         const data = await response.json().catch(() => null);
         setIsOutOfCredits(true);
-        setErrorMessage(typeof data?.error === "string" ? data.error : LIMIT_MESSAGE);
+        setErrorMessage(typeof data?.error === "string" ? data.error : t("chat.limit"));
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
             message.id === localUserMessage.id ? { ...message, status: "error" as const } : message,
@@ -369,11 +361,11 @@ export function ChatInterface({
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(typeof data?.error === "string" ? data.error : "The chat request failed.");
+        throw new Error(typeof data?.error === "string" ? data.error : t("chat.requestFailed"));
       }
 
       if (!response.body) {
-        throw new Error("The chat response could not be streamed.");
+        throw new Error(t("chat.streamFailed"));
       }
 
       setMessages((currentMessages) =>
@@ -455,13 +447,13 @@ export function ChatInterface({
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
             message.id === loadingMessage.id
-              ? { ...message, content: "I could not read a clear answer this time.", status: "sent" as const }
+              ? { ...message, content: t("chat.emptyAnswer"), status: "sent" as const }
               : message,
           ),
         );
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "The chat request failed.");
+      setErrorMessage(error instanceof Error ? error.message : t("chat.requestFailed"));
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
           message.id === localUserMessage.id ? { ...message, status: "error" as const } : message,
@@ -484,7 +476,7 @@ export function ChatInterface({
               href="/dashboard"
               className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-200"
             >
-              ← Dashboard
+              {t("chat.back")}
             </Link>
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${providerGradient} text-2xl shadow-xl`}>
               {providerSymbol}
@@ -495,7 +487,7 @@ export function ChatInterface({
             </div>
             {totalCredits !== null ? (
               <div className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-right">
-                <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-amber-200">Credits</p>
+                <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-amber-200">{t("chat.credits")}</p>
                 <p className="font-bold text-white">{totalCredits}</p>
               </div>
             ) : null}
@@ -504,7 +496,7 @@ export function ChatInterface({
 
         {isOutOfCredits ? (
           <div className="shrink-0 border-y border-amber-200/20 bg-amber-200/15 px-4 py-3 text-center text-sm font-black text-amber-100">
-            {LIMIT_MESSAGE}
+            {t("chat.limit")}
           </div>
         ) : null}
 
@@ -519,7 +511,7 @@ export function ChatInterface({
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
               {isLoadingHistory ? (
                 <div className="flex min-h-80 items-center justify-center text-violet-100/65">
-                  Loading your conversation…
+                  {t("chat.loading")}
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex min-h-80 items-center justify-center text-center">
@@ -527,9 +519,9 @@ export function ChatInterface({
                     <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br ${providerGradient} text-3xl shadow-lg`}>
                       {providerSymbol}
                     </div>
-                    <h1 className="text-2xl font-black text-white">Start your consultation</h1>
+                    <h1 className="text-2xl font-black text-white">{t("chat.startTitle")}</h1>
                     <p className="mt-3 text-violet-100/65">
-                      Ask {providerName} about love, career, timing, or your current cosmic pattern.
+                      {t("chat.startText", { providerName })}
                     </p>
                   </div>
                 </div>
@@ -552,7 +544,7 @@ export function ChatInterface({
                           <MarkdownMessage content={message.content} />
                         )}
                         {message.status === "error" ? (
-                          <p className="mt-2 text-xs font-bold text-rose-100">Not sent</p>
+                          <p className="mt-2 text-xs font-bold text-rose-100">{t("chat.notSent")}</p>
                         ) : null}
                       </div>
                     </div>
@@ -565,11 +557,11 @@ export function ChatInterface({
             <form onSubmit={handleSubmit} className="shrink-0 border-t border-white/10 pt-4">
               <div className="flex gap-2 rounded-3xl border border-white/15 bg-[#0b0824]/80 p-2 shadow-inner shadow-violet-950/30 focus-within:border-amber-300">
                 <textarea
-                  aria-label="Message"
+                  aria-label={t("chat.messageLabel")}
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
                   disabled={isInputDisabled}
-                  placeholder={isOutOfCredits ? LIMIT_MESSAGE : `Message ${providerName}…`}
+                  placeholder={isOutOfCredits ? t("chat.limit") : t("chat.placeholder", { providerName })}
                   rows={1}
                   className="max-h-36 min-h-12 flex-1 resize-none bg-transparent px-3 py-3 text-sm text-slate-50 outline-none placeholder:text-violet-100/65 disabled:cursor-not-allowed disabled:text-violet-100/65"
                   onKeyDown={(event) => {
@@ -584,11 +576,11 @@ export function ChatInterface({
                   disabled={isInputDisabled || !inputValue.trim()}
                   className="rounded-2xl bg-gradient-to-r from-amber-200 to-fuchsia-300 px-5 py-3 text-sm font-black text-[#160b2f] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-amber-200 disabled:cursor-not-allowed disabled:bg-none disabled:bg-slate-700 disabled:text-slate-400"
                 >
-                  {isSending ? "Reading…" : "Send"}
+                  {isSending ? t("chat.reading") : t("chat.send")}
                 </button>
               </div>
               <p className="mt-2 text-xs text-violet-100/65">
-                Press Enter to send, Shift + Enter for a new line. Each sent message costs 1 credit.
+                {t("chat.hint")}
               </p>
             </form>
           </div>

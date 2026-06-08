@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { useLocalization, type TranslationKey } from "@/lib/localization";
 
 type NavItem = {
-  label: string;
+  labelKey: TranslationKey;
   href: string;
   icon: (isActive: boolean) => ReactNode;
 };
 
 const navItems: NavItem[] = [
   {
-    label: "Home",
+    labelKey: "nav.home",
     href: "/dashboard",
     icon: (isActive) => (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
@@ -28,7 +29,7 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    label: "Readings",
+    labelKey: "nav.readings",
     href: "/readings",
     icon: () => (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
@@ -40,7 +41,7 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    label: "Profile",
+    labelKey: "nav.profile",
     href: "/profile",
     icon: () => (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
@@ -50,7 +51,7 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    label: "History",
+    labelKey: "nav.history",
     href: "/history",
     icon: () => (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
@@ -71,6 +72,7 @@ const navItems: NavItem[] = [
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const { t } = useLocalization();
 
   return (
     <nav className="z-30 -mx-5 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2" aria-label="Primary">
@@ -92,7 +94,7 @@ export function BottomNavigation() {
               <span className={`transition ${isActive ? "drop-shadow-[0_0_12px_rgba(253,230,138,0.45)]" : "opacity-80 group-hover:opacity-100"}`}>
                 {item.icon(isActive)}
               </span>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </Link>
           );
         })}
