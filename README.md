@@ -42,3 +42,17 @@ A monolithic AI astrology web application built with Next.js App Router, Tailwin
 ## Authentication
 
 The app uses email/password authentication with hashed passwords and an HTTP-only JWT session cookie. The `/dashboard` route is protected by Next.js middleware.
+
+## Render deployment
+
+Use these settings for the Render web service:
+
+```bash
+Build Command: npm install && npm run render:build
+Start Command: npm start
+```
+
+`npm run render:build` runs `prisma migrate deploy`, seeds the default admin/provider data, and then runs the Next.js production build. If you configure Render manually in the dashboard, do not use only `npm run build` unless Render has already installed dependencies and you have a separate deploy step for Prisma migrations.
+
+Required Render environment variables are `DATABASE_URL`, `JWT_SECRET`, and any AI provider keys you plan to use. The included `render.yaml` can create and link the PostgreSQL database automatically when deploying from the blueprint.
+
