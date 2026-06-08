@@ -5,6 +5,7 @@
     "start": "next start",
     "lint": "eslint .",
     "prisma:generate": "prisma generate",
+    "prisma:repair": "node scripts/repair-prisma-client.mjs",
     "prisma:migrate": "prisma migrate dev",
     "predev": "prisma generate",
     "prebuild": "prisma generate",

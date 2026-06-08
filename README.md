@@ -25,6 +25,14 @@ A monolithic AI astrology web application built with Next.js App Router, Tailwin
    npm run prisma:migrate -- --name init
    ```
 
+   If Prisma reports `EPERM` while renaming `query_engine-windows.dll.node` on Windows, stop any running `npm run dev` / `next dev` process and repair the generated client:
+
+   ```bash
+   npm run prisma:repair
+   ```
+
+   This error means the database migration may have succeeded, but the generated Prisma Client is still stale. Runtime errors such as `Unknown field name for select statement on model User` will continue until client generation succeeds.
+
 4. Start the development server:
 
    ```bash
