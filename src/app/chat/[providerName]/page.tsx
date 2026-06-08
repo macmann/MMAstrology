@@ -64,14 +64,20 @@ export default async function ChatPage({ params }: ChatPageProps) {
     notFound();
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: {
-      astrologicalProfile: {
-        select: { id: true },
+  const [user, providerConfig] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
+        astrologicalProfile: {
+          select: { id: true },
+        },
       },
-    },
-  });
+    }),
+    prisma.providerConfig.findUnique({
+      where: { name: providerName },
+      select: { isActive: true },
+    }),
+  ]);
 
   if (!user) {
     redirect("/login");
@@ -79,6 +85,10 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
   if (!user.astrologicalProfile) {
     redirect("/onboarding");
+  }
+
+  if (!providerConfig?.isActive) {
+    notFound();
   }
 
   const provider = chatProviders[providerName];
