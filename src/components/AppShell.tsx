@@ -5,8 +5,8 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <main className="cosmic-page">
       <div className="cosmic-shell flex flex-col">
-        <div className="flex min-h-screen flex-1 flex-col sm:min-h-[calc(100vh-3rem)]">
-          <div className="flex-1">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
           <BottomNavigation />
         </div>
       </div>

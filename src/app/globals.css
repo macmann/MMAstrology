@@ -40,11 +40,11 @@ input {
 
 @layer components {
   .cosmic-page {
-    @apply min-h-screen bg-[#07051a] text-slate-50 sm:py-6;
+    @apply h-dvh overflow-hidden bg-[#07051a] text-slate-50 sm:py-6;
   }
 
   .cosmic-shell {
-    @apply mx-auto min-h-screen max-w-[430px] overflow-hidden border-x border-white/10 bg-[#120b2d] shadow-2xl shadow-fuchsia-950/40 sm:min-h-[calc(100vh-3rem)] sm:rounded-[2.25rem] sm:border;
+    @apply mx-auto h-dvh max-w-[430px] overflow-hidden border-x border-white/10 bg-[#120b2d] shadow-2xl shadow-fuchsia-950/40 sm:h-[calc(100dvh-3rem)] sm:rounded-[2.25rem] sm:border;
     background:
       radial-gradient(circle at 15% 0%, rgba(250, 204, 21, 0.16), transparent 14rem),
       radial-gradient(circle at 92% 7%, rgba(168, 85, 247, 0.28), transparent 16rem),
