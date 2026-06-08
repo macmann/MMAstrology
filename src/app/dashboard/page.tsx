@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
-import { checkAndResetCredits } from "@/lib/credits";
 import { astrologers } from "@/lib/astrologers";
 import { prisma } from "@/lib/prisma";
-import { DashboardCreditBalance } from "./DashboardCreditBalance";
 
 export default async function DashboardPage() {
   const session = await getCurrentSession();
@@ -13,12 +11,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [credits, user, activeProviderConfigs] = await Promise.all([
-    checkAndResetCredits(session.userId),
+  const [user, activeProviderConfigs] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId },
       select: {
         email: true,
+        name: true,
         astrologicalProfile: {
           select: { id: true },
         },
@@ -30,7 +28,7 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  if (!user || !credits) {
+  if (!user) {
     redirect("/login");
   }
 
@@ -40,6 +38,8 @@ export default async function DashboardPage() {
 
   const activeProviderNames = new Set(activeProviderConfigs.map((provider) => provider.name));
   const availableAstrologers = astrologers.filter((astrologer) => activeProviderNames.has(astrologer.name));
+  const displayName = user.name?.trim() || user.email;
+  const profileInitials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <>
@@ -59,20 +59,22 @@ export default async function DashboardPage() {
               </h1>
             </div>
           </div>
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-amber-200/20 bg-amber-200 text-sm font-black text-[#160b2f]">
-            AI
-          </div>
+          <Link
+            href="/profile"
+            aria-label="Open your profile"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-amber-200/20 bg-amber-200 text-sm font-black text-[#160b2f] shadow-lg shadow-amber-950/20 transition hover:scale-105 hover:bg-amber-100 active:scale-95"
+          >
+            {profileInitials}
+          </Link>
         </div>
 
         <p className="relative mt-5 line-clamp-2 text-sm leading-6 text-violet-100/80">
-          Welcome back, {user.email}. Start a personalized consultation based on your birth profile.
+          Welcome back, {displayName}. Start a personalized consultation based on your birth profile. Manage credits and account settings in your profile.
         </p>
       </header>
 
-      <section className="-mt-6 px-5 pb-6">
-        <DashboardCreditBalance initialFreeCredits={credits.dailyFreeCredits} initialPurchasedCredits={credits.purchasedCredits} />
-
-        <div className="mt-7 flex items-end justify-between gap-3">
+      <section className="px-5 pb-6 pt-6">
+        <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.26em] text-violet-100/65">Available now</p>
             <h2 className="mt-1 text-2xl font-black tracking-tight text-amber-100">Astrologers</h2>
