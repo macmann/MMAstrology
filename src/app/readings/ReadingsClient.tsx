@@ -3,11 +3,13 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLocalization, type TranslationKey } from "@/lib/localization";
+import type { ZodiacElement, ZodiacSign } from "@/lib/astrology";
 
 type Blueprint = {
-  sunSign: string;
+  sunSign: ZodiacSign;
   glyph: string;
-  element: string;
+  element: ZodiacElement;
   dateOfBirth: string;
   birthTime: string;
   birthLocation: string;
@@ -16,14 +18,60 @@ type Blueprint = {
   alignmentAdvice: string;
 };
 
-function formatBirthDate(value: string) {
+const dailyGuidanceKeys = [
+  "readings.daily.0",
+  "readings.daily.1",
+  "readings.daily.2",
+  "readings.daily.3",
+  "readings.daily.4",
+  "readings.daily.5",
+  "readings.daily.6",
+] as const satisfies readonly TranslationKey[];
+
+const signTranslationKeys = {
+  Aries: "readings.sign.Aries",
+  Taurus: "readings.sign.Taurus",
+  Gemini: "readings.sign.Gemini",
+  Cancer: "readings.sign.Cancer",
+  Leo: "readings.sign.Leo",
+  Virgo: "readings.sign.Virgo",
+  Libra: "readings.sign.Libra",
+  Scorpio: "readings.sign.Scorpio",
+  Sagittarius: "readings.sign.Sagittarius",
+  Capricorn: "readings.sign.Capricorn",
+  Aquarius: "readings.sign.Aquarius",
+  Pisces: "readings.sign.Pisces",
+} as const satisfies Record<ZodiacSign, TranslationKey>;
+
+const elementTranslationKeys = {
+  Fire: "readings.element.Fire",
+  Earth: "readings.element.Earth",
+  Air: "readings.element.Air",
+  Water: "readings.element.Water",
+} as const satisfies Record<ZodiacElement, TranslationKey>;
+
+const overviewTranslationKeys = {
+  Fire: "readings.overview.Fire",
+  Earth: "readings.overview.Earth",
+  Air: "readings.overview.Air",
+  Water: "readings.overview.Water",
+} as const satisfies Record<ZodiacElement, TranslationKey>;
+
+const alignmentTranslationKeys = {
+  Fire: "readings.alignment.Fire",
+  Earth: "readings.alignment.Earth",
+  Air: "readings.alignment.Air",
+  Water: "readings.alignment.Water",
+} as const satisfies Record<ZodiacElement, TranslationKey>;
+
+function formatBirthDate(value: string, language: "en" | "my") {
   const date = new Date(`${value}T00:00:00.000Z`);
 
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -45,6 +93,7 @@ function ReadingPanel({ eyebrow, title, children }: Readonly<{ eyebrow: string; 
 }
 
 export function ReadingsClient() {
+  const { language, t } = useLocalization();
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -53,12 +102,15 @@ export function ReadingsClient() {
     let isMounted = true;
 
     async function loadBlueprint() {
+      setError("");
+      setIsLoading(true);
+
       try {
         const response = await fetch("/api/astrology/blueprint");
         const payload = await response.json();
 
         if (!response.ok) {
-          throw new Error(payload.error ?? "Unable to load your automated reading.");
+          throw new Error(t("readings.loadError"));
         }
 
         if (isMounted) {
@@ -66,7 +118,7 @@ export function ReadingsClient() {
         }
       } catch (caughtError) {
         if (isMounted) {
-          setError(caughtError instanceof Error ? caughtError.message : "Unable to load your automated reading.");
+          setError(caughtError instanceof Error ? caughtError.message : t("readings.loadError"));
         }
       } finally {
         if (isMounted) {
@@ -80,7 +132,12 @@ export function ReadingsClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
+
+  const dailyGuidanceKey = dailyGuidanceKeys[new Date().getUTCDay()];
+  const translatedElement = blueprint ? t(elementTranslationKeys[blueprint.element]) : "";
+  const translatedBirthTime = blueprint?.birthTime || t("readings.recordedBirthTime");
+  const translatedBirthLocation = blueprint?.birthLocation || t("readings.recordedBirthplace");
 
   return (
     <>
@@ -88,11 +145,9 @@ export function ReadingsClient() {
         <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber-200/20 blur-3xl" />
         <div className="absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-fuchsia-400/20 blur-3xl" />
         <div className="relative">
-          <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">Automated Readings</p>
-          <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">Your cosmic blueprint</h1>
-          <p className="mt-4 text-sm leading-6 text-violet-100/80">
-            A personalized static overview generated from your saved birth profile and classic Western sun-sign math.
-          </p>
+          <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">{t("readings.eyebrow")}</p>
+          <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">{t("readings.title")}</h1>
+          <p className="mt-4 text-sm leading-6 text-violet-100/80">{t("readings.subtitle")}</p>
         </div>
       </header>
 
@@ -110,11 +165,11 @@ export function ReadingsClient() {
         {error ? (
           <section className="cosmic-card">
             <div className="relative space-y-4">
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-rose-100/80">Reading unavailable</p>
-              <h2 className="text-2xl font-black text-white">We could not open your blueprint.</h2>
+              <p className="text-xs font-black uppercase tracking-[0.28em] text-rose-100/80">{t("readings.unavailable")}</p>
+              <h2 className="text-2xl font-black text-white">{t("readings.openError")}</h2>
               <p className="text-sm leading-6 text-violet-100/75">{error}</p>
               <Link href="/profile" className="inline-flex rounded-full bg-amber-200 px-4 py-3 text-sm font-black text-[#160b2f]">
-                Review birth profile
+                {t("readings.reviewProfile")}
               </Link>
             </div>
           </section>
@@ -130,26 +185,28 @@ export function ReadingsClient() {
                 <div className="pointer-events-none absolute inset-x-5 top-5 text-[0.64rem] tracking-[0.78rem] text-amber-100/35">✦ ✧ ✶ ✦ ✺</div>
 
                 <div className="relative pt-7 text-center">
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.42em] text-amber-100/75">Primary Sun Sign</p>
+                  <p className="text-[0.66rem] font-black uppercase tracking-[0.42em] text-amber-100/75">{t("readings.primarySunSign")}</p>
                   <div className="mx-auto mt-5 flex h-28 w-28 items-center justify-center rounded-full border border-amber-100/30 bg-amber-100/10 text-6xl text-amber-100 shadow-inner shadow-amber-50/10">
                     {blueprint.glyph}
                   </div>
                   <h2 className="mt-5 bg-gradient-to-r from-amber-100 via-yellow-200 to-amber-400 bg-clip-text text-5xl font-black leading-none tracking-tight text-transparent drop-shadow">
-                    {blueprint.sunSign}
+                    {t(signTranslationKeys[blueprint.sunSign])}
                   </h2>
-                  <p className="mt-2 text-sm font-black uppercase tracking-[0.34em] text-violet-100/65">{blueprint.element} element</p>
+                  <p className="mt-2 text-sm font-black uppercase tracking-[0.34em] text-violet-100/65">
+                    {t("readings.elementLabel", { element: translatedElement })}
+                  </p>
 
                   <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">Birth date</p>
-                      <p className="mt-1 text-sm font-black text-white">{formatBirthDate(blueprint.dateOfBirth)}</p>
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">{t("readings.birthDate")}</p>
+                      <p className="mt-1 text-sm font-black text-white">{formatBirthDate(blueprint.dateOfBirth, language)}</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">Birth time</p>
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">{t("readings.birthTime")}</p>
                       <p className="mt-1 text-sm font-black text-white">{blueprint.birthTime}</p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">Location</p>
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">{t("readings.location")}</p>
                       <p className="mt-1 line-clamp-2 text-sm font-black text-white">{blueprint.birthLocation}</p>
                     </div>
                   </div>
@@ -158,16 +215,21 @@ export function ReadingsClient() {
             </section>
 
             <section className="space-y-4">
-              <ReadingPanel eyebrow="Core strengths" title={`${blueprint.element} expression`}>
-                <p>{blueprint.overview}</p>
+              <ReadingPanel eyebrow={t("readings.coreStrengths")} title={t("readings.elementExpression", { element: translatedElement })}>
+                <p>{t(overviewTranslationKeys[blueprint.element])}</p>
               </ReadingPanel>
 
-              <ReadingPanel eyebrow="Daily influences" title="Cosmic weather">
-                <p>{blueprint.dailyGuidance}</p>
+              <ReadingPanel eyebrow={t("readings.dailyInfluences")} title={t("readings.cosmicWeather")}>
+                <p>{t(dailyGuidanceKey)}</p>
               </ReadingPanel>
 
-              <ReadingPanel eyebrow="Alignment advice" title="Use your birth context">
-                <p>{blueprint.alignmentAdvice}</p>
+              <ReadingPanel eyebrow={t("readings.alignmentAdvice")} title={t("readings.useBirthContext")}>
+                <p>
+                  {t(alignmentTranslationKeys[blueprint.element], {
+                    birthTime: translatedBirthTime,
+                    birthLocation: translatedBirthLocation,
+                  })}
+                </p>
               </ReadingPanel>
             </section>
           </>
