@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { astrologers } from "@/lib/astrologers";
 
 type Blueprint = {
   sunSign: string;
@@ -170,40 +169,6 @@ export function ReadingsClient() {
               <ReadingPanel eyebrow="Alignment advice" title="Use your birth context">
                 <p>{blueprint.alignmentAdvice}</p>
               </ReadingPanel>
-            </section>
-
-            <section className="space-y-4 pt-1">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.26em] text-violet-100/65">Go deeper</p>
-                  <h2 className="mt-1 text-2xl font-black tracking-tight text-amber-100">Ask a guide</h2>
-                </div>
-                <p className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-xs font-black text-amber-100 shadow-sm">Optional</p>
-              </div>
-
-              <div className="space-y-4">
-                {astrologers.map((astrologer) => (
-                  <Link
-                    key={astrologer.name}
-                    href={`/chat/${encodeURIComponent(astrologer.name)}`}
-                    className="group block rounded-[1.85rem] border border-white/15 bg-white/[0.08] p-4 shadow-xl shadow-violet-950/20 backdrop-blur transition hover:border-amber-200/40 hover:bg-white/[0.12]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${astrologer.accent} text-2xl shadow-lg ${astrologer.glow}`}>
-                        {astrologer.symbol}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-lg font-black text-slate-50">{astrologer.name}</h3>
-                        <p className="truncate text-xs font-bold uppercase tracking-[0.12em] text-violet-100/65">{astrologer.honorific}</p>
-                      </div>
-                      <span className="rounded-full bg-amber-100/10 px-3 py-2 text-xs font-black text-amber-200 transition group-hover:bg-amber-200 group-hover:text-[#160b2f]">
-                        Start
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-violet-100/70">{astrologer.tagline}</p>
-                  </Link>
-                ))}
-              </div>
             </section>
           </>
         ) : null}
