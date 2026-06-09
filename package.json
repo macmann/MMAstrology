@@ -1,4 +1,5 @@
 {
+  "name": "nat-khat-ai",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "mmastrology-pwa-v1";
+const CACHE_VERSION = "nat-khat-ai-pwa-v1";
 const PRECACHE_URLS = [
   "/",
   "/offline.html",

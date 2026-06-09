@@ -1,6 +1,6 @@
 {
-  "name": "AI Bay Din",
-  "short_name": "AI Bay",
+  "name": "Nat Khat AI",
+  "short_name": "Nat Khat",
   "description": "AI-powered astrology guidance for modern seekers.",
   "id": "/",
   "start_url": "/",
@@ -41,21 +41,21 @@
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow",
-      "label": "AI Bay Din mobile home screen"
+      "label": "Nat Khat AI mobile home screen"
     },
     {
       "src": "/screenshots/wide-home.svg",
       "sizes": "1280x720",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "AI Bay Din desktop install experience"
+      "label": "Nat Khat AI desktop install experience"
     }
   ],
   "shortcuts": [
     {
       "name": "Start your profile",
       "short_name": "Register",
-      "description": "Create your birth profile and begin using AI Bay Din.",
+      "description": "Create your birth profile and begin using Nat Khat AI.",
       "url": "/register",
       "icons": [
         {
@@ -68,7 +68,7 @@
     {
       "name": "Log in",
       "short_name": "Login",
-      "description": "Open your existing AI Bay Din account.",
+      "description": "Open your existing Nat Khat AI account.",
       "url": "/login",
       "icons": [
         {
