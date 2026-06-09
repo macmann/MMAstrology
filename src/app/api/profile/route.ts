@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
+import { ensureLifeReadingForUser } from "@/lib/ensure-life-reading";
 import { prisma } from "@/lib/prisma";
 
 function parseDateOfBirth(value: unknown) {
@@ -52,14 +53,22 @@ export async function POST(request: Request) {
       dob,
       birthTime,
       birthLocation,
+      lifeReadingEn: null,
+      lifeReadingMy: null,
+      lifeReadingGeneratedAt: null,
     },
     create: {
       userId: session.userId,
       dob,
       birthTime,
       birthLocation,
+      lifeReadingEn: null,
+      lifeReadingMy: null,
+      lifeReadingGeneratedAt: null,
     },
   });
 
-  return NextResponse.json({ profile });
+  const profileWithReading = await ensureLifeReadingForUser(session.userId);
+
+  return NextResponse.json({ profile: profileWithReading ?? profile });
 }

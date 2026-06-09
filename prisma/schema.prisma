@@ -37,12 +37,15 @@ model User {
 }
 
 model AstrologicalProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dob           DateTime
-  birthTime     String
-  birthLocation String
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dob                    DateTime
+  birthTime              String
+  birthLocation          String
+  lifeReadingEn          String?   @db.Text
+  lifeReadingMy          String?   @db.Text
+  lifeReadingGeneratedAt DateTime?
 }
 
 model CreditTransaction {

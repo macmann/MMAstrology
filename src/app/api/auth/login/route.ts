@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { ensureLifeReadingForUser } from "@/lib/ensure-life-reading";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, getAuthCookieOptions, signSessionToken } from "@/lib/auth";
 
@@ -26,6 +27,12 @@ export async function POST(request: Request) {
 
   if (!isValidPassword) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+  }
+
+  try {
+    await ensureLifeReadingForUser(user.id);
+  } catch (error) {
+    console.error("Unable to generate life reading during login", error);
   }
 
   const token = await signSessionToken({ userId: user.id, email: user.email, role: user.role });
