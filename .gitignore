@@ -4,3 +4,8 @@ node_modules
 .env*.local
 *.tsbuildinfo
 .DS_Store
+
+# Generated PWA PNG icons
+public/icons/app-icon-192.png
+public/icons/app-icon-512.png
+public/icons/app-icon-maskable.png
