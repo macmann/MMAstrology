@@ -14,7 +14,7 @@ export default function HomePage() {
           <div className="absolute -left-20 bottom-6 h-52 w-52 rounded-full bg-fuchsia-400/20 blur-3xl" />
           <nav className="relative flex items-center justify-between gap-3">
             <Link href="/" className="text-lg font-black tracking-tight text-amber-100">
-              Nat Khat AI
+              NatKhat AI
             </Link>
             <div className="flex items-center gap-2">
               <label className="sr-only" htmlFor="home-language">

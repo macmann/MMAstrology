@@ -41,7 +41,7 @@ export function OnboardingForm() {
         <p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/70">Onboarding</p>
         <h1 className="mt-3 text-3xl font-black tracking-tight text-white">Create your birth profile</h1>
         <p className="mt-2 text-sm leading-6 text-violet-100/70">
-          These details help Nat Khat AI personalize your AI readings with your natal context.
+          These details help NatKhat AI personalize your AI readings with your natal context.
         </p>
       </div>
 

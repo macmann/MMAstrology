@@ -1,9 +1,11 @@
-const CACHE_VERSION = "nat-khat-ai-pwa-v1";
+const CACHE_VERSION = "natkhat-ai-pwa-v2";
 const PRECACHE_URLS = [
   "/",
   "/offline.html",
   "/manifest.json",
   "/icons/app-icon.svg",
+  "/icons/app-icon-192.svg",
+  "/icons/app-icon-512.svg",
   "/icons/app-icon-maskable.svg"
 ];
 
