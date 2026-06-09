@@ -13,20 +13,12 @@ type Blueprint = {
   dateOfBirth: string;
   birthTime: string;
   birthLocation: string;
-  overview: string;
-  dailyGuidance: string;
-  alignmentAdvice: string;
+  overallReading: {
+    en: string | null;
+    my: string | null;
+  };
+  lifeReadingGeneratedAt: string | null;
 };
-
-const dailyGuidanceKeys = [
-  "readings.daily.0",
-  "readings.daily.1",
-  "readings.daily.2",
-  "readings.daily.3",
-  "readings.daily.4",
-  "readings.daily.5",
-  "readings.daily.6",
-] as const satisfies readonly TranslationKey[];
 
 const signTranslationKeys = {
   Aries: "readings.sign.Aries",
@@ -48,20 +40,6 @@ const elementTranslationKeys = {
   Earth: "readings.element.Earth",
   Air: "readings.element.Air",
   Water: "readings.element.Water",
-} as const satisfies Record<ZodiacElement, TranslationKey>;
-
-const overviewTranslationKeys = {
-  Fire: "readings.overview.Fire",
-  Earth: "readings.overview.Earth",
-  Air: "readings.overview.Air",
-  Water: "readings.overview.Water",
-} as const satisfies Record<ZodiacElement, TranslationKey>;
-
-const alignmentTranslationKeys = {
-  Fire: "readings.alignment.Fire",
-  Earth: "readings.alignment.Earth",
-  Air: "readings.alignment.Air",
-  Water: "readings.alignment.Water",
 } as const satisfies Record<ZodiacElement, TranslationKey>;
 
 function formatBirthDate(value: string, language: "en" | "my") {
@@ -134,10 +112,8 @@ export function ReadingsClient() {
     };
   }, [t]);
 
-  const dailyGuidanceKey = dailyGuidanceKeys[new Date().getUTCDay()];
   const translatedElement = blueprint ? t(elementTranslationKeys[blueprint.element]) : "";
-  const translatedBirthTime = blueprint?.birthTime || t("readings.recordedBirthTime");
-  const translatedBirthLocation = blueprint?.birthLocation || t("readings.recordedBirthplace");
+  const overallReading = blueprint?.overallReading[language] || blueprint?.overallReading.en || blueprint?.overallReading.my || "";
 
   return (
     <>
@@ -168,70 +144,63 @@ export function ReadingsClient() {
               <p className="text-xs font-black uppercase tracking-[0.28em] text-rose-100/80">{t("readings.unavailable")}</p>
               <h2 className="text-2xl font-black text-white">{t("readings.openError")}</h2>
               <p className="text-sm leading-6 text-violet-100/75">{error}</p>
-              <Link href="/profile" className="inline-flex rounded-full bg-amber-200 px-4 py-3 text-sm font-black text-[#160b2f]">
+              <Link href="/profile" className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-[#160b2f]">
                 {t("readings.reviewProfile")}
               </Link>
             </div>
           </section>
         ) : null}
 
-        {blueprint ? (
+        {!isLoading && !error && blueprint ? (
           <>
-            <section className="relative overflow-hidden rounded-[2.25rem] border border-amber-100/25 bg-[#09051f] p-[1px] shadow-2xl shadow-amber-950/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-200/35 via-fuchsia-300/15 to-sky-300/20" />
-              <div className="relative overflow-hidden rounded-[2.2rem] bg-gradient-to-br from-[#24124c] via-[#12092e] to-[#071b34] p-5">
-                <div className="absolute -right-10 -top-16 h-44 w-44 rounded-full bg-amber-200/20 blur-3xl" />
-                <div className="absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-fuchsia-400/20 blur-3xl" />
-                <div className="pointer-events-none absolute inset-x-5 top-5 text-[0.64rem] tracking-[0.78rem] text-amber-100/35">✦ ✧ ✶ ✦ ✺</div>
-
-                <div className="relative pt-7 text-center">
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.42em] text-amber-100/75">{t("readings.primarySunSign")}</p>
-                  <div className="mx-auto mt-5 flex h-28 w-28 items-center justify-center rounded-full border border-amber-100/30 bg-amber-100/10 text-6xl text-amber-100 shadow-inner shadow-amber-50/10">
-                    {blueprint.glyph}
-                  </div>
-                  <h2 className="mt-5 bg-gradient-to-r from-amber-100 via-yellow-200 to-amber-400 bg-clip-text text-5xl font-black leading-none tracking-tight text-transparent drop-shadow">
-                    {t(signTranslationKeys[blueprint.sunSign])}
-                  </h2>
-                  <p className="mt-2 text-sm font-black uppercase tracking-[0.34em] text-violet-100/65">
-                    {t("readings.elementLabel", { element: translatedElement })}
-                  </p>
-
-                  <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">{t("readings.birthDate")}</p>
-                      <p className="mt-1 text-sm font-black text-white">{formatBirthDate(blueprint.dateOfBirth, language)}</p>
+            <section className="cosmic-card">
+              <div className="relative flex items-start justify-between gap-5">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.32em] text-violet-100/60">{t("readings.primarySunSign")}</p>
+                  <div className="mt-4 flex items-center gap-4">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-5xl shadow-lg shadow-fuchsia-950/30">
+                      {blueprint.glyph}
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">{t("readings.birthTime")}</p>
-                      <p className="mt-1 text-sm font-black text-white">{blueprint.birthTime}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-violet-100/55">{t("readings.location")}</p>
-                      <p className="mt-1 line-clamp-2 text-sm font-black text-white">{blueprint.birthLocation}</p>
+                    <div>
+                      <h2 className="text-3xl font-black text-white">{t(signTranslationKeys[blueprint.sunSign])}</h2>
+                      <p className="mt-1 text-sm font-bold text-amber-100/80">
+                        {t("readings.elementLabel", { element: translatedElement })}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <div className="relative mt-6 grid gap-3 text-sm sm:grid-cols-3">
+                <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.birthDate")}</p>
+                  <p className="mt-2 font-bold text-white">{formatBirthDate(blueprint.dateOfBirth, language)}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.birthTime")}</p>
+                  <p className="mt-2 font-bold text-white">{blueprint.birthTime}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.location")}</p>
+                  <p className="mt-2 font-bold text-white">{blueprint.birthLocation}</p>
+                </div>
+              </div>
             </section>
 
-            <section className="space-y-4">
-              <ReadingPanel eyebrow={t("readings.coreStrengths")} title={t("readings.elementExpression", { element: translatedElement })}>
-                <p>{t(overviewTranslationKeys[blueprint.element])}</p>
-              </ReadingPanel>
-
-              <ReadingPanel eyebrow={t("readings.dailyInfluences")} title={t("readings.cosmicWeather")}>
-                <p>{t(dailyGuidanceKey)}</p>
-              </ReadingPanel>
-
-              <ReadingPanel eyebrow={t("readings.alignmentAdvice")} title={t("readings.useBirthContext")}>
-                <p>
-                  {t(alignmentTranslationKeys[blueprint.element], {
-                    birthTime: translatedBirthTime,
-                    birthLocation: translatedBirthLocation,
+            <ReadingPanel eyebrow={t("readings.oneTimeReading")} title={t("readings.overallSignReading")}>
+              <p className="whitespace-pre-line">{overallReading}</p>
+              {blueprint.lifeReadingGeneratedAt ? (
+                <p className="mt-4 text-xs font-bold text-violet-100/50">
+                  {t("readings.savedOnce", {
+                    date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }).format(new Date(blueprint.lifeReadingGeneratedAt)),
                   })}
                 </p>
-              </ReadingPanel>
-            </section>
+              ) : null}
+            </ReadingPanel>
           </>
         ) : null}
       </main>

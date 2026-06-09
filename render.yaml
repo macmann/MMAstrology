@@ -24,6 +24,8 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4o-mini
+      - key: lifereadingmodel
+        value: gpt-5.5
       - key: ANTHROPIC_MODEL
         value: claude-3-5-haiku-latest
       - key: GOOGLE_GENAI_MODEL

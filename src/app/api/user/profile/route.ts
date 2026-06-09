@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
+import { ensureLifeReadingForUser } from "@/lib/ensure-life-reading";
 import { checkAndResetCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
 
@@ -149,6 +150,16 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: `Name must be ${MAX_NAME_LENGTH} characters or fewer.` }, { status: 400 });
   }
 
+  const existingProfile = await prisma.astrologicalProfile.findUnique({
+    where: { userId: session.userId },
+    select: { dob: true, birthTime: true, birthLocation: true },
+  });
+  const didBirthProfileChange =
+    !existingProfile ||
+    existingProfile.dob.toISOString().slice(0, 10) !== profileFields.dob.toISOString().slice(0, 10) ||
+    existingProfile.birthTime !== profileFields.birthTime ||
+    existingProfile.birthLocation !== profileFields.birthLocation;
+
   const [user, profile] = await prisma.$transaction([
     prisma.user.update({
       where: { id: session.userId },
@@ -161,6 +172,13 @@ export async function PUT(request: Request) {
         dob: profileFields.dob,
         birthTime: profileFields.birthTime,
         birthLocation: profileFields.birthLocation,
+        ...(didBirthProfileChange
+          ? {
+              lifeReadingEn: null,
+              lifeReadingMy: null,
+              lifeReadingGeneratedAt: null,
+            }
+          : {}),
       },
       create: {
         userId: session.userId,
@@ -171,5 +189,7 @@ export async function PUT(request: Request) {
     }),
   ]);
 
-  return NextResponse.json({ user, profile });
+  const profileWithReading = didBirthProfileChange ? await ensureLifeReadingForUser(session.userId) : profile;
+
+  return NextResponse.json({ user, profile: profileWithReading });
 }
