@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdBanner } from "@/components/AdBanner";
 import { useLocalization, type TranslationKey } from "@/lib/localization";
 import type { ZodiacElement, ZodiacSign } from "@/lib/astrology";
 
@@ -203,6 +204,8 @@ export function ReadingsClient() {
             </ReadingPanel>
           </>
         ) : null}
+
+        <AdBanner className="mb-3" />
       </main>
     </>
   );

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { LocalizationProvider } from "@/lib/localization";
 import "./globals.css";
@@ -34,9 +35,20 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const adsensePublisherId = process.env.NEXT_PUBLIC_ADSENSE_PID?.trim();
+
   return (
     <html lang="en">
       <body>
+        {adsensePublisherId ? (
+          <Script
+            id="google-adsense"
+            async
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePublisherId.startsWith("ca-pub-") ? adsensePublisherId : `ca-pub-${adsensePublisherId}`}`}
+          />
+        ) : null}
         <LocalizationProvider>
           {children}
           <ServiceWorkerRegistration />

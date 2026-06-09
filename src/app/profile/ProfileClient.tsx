@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { AdBanner } from "@/components/AdBanner";
 import { LogoutButton } from "@/components/LogoutButton";
 import { languageOptions, useLocalization, type Language } from "@/lib/localization";
 
@@ -425,6 +426,8 @@ export function ProfileClient() {
             </section>
           </div>
         )}
+
+        <AdBanner className="mb-3" />
       </div>
     </div>
   );
