@@ -4,17 +4,17 @@ import { LocalizationProvider } from "@/lib/localization";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "Nat Khat AI",
+  applicationName: "NatKhat AI",
   title: {
-    default: "Nat Khat AI",
-    template: "%s | Nat Khat AI",
+    default: "NatKhat AI",
+    template: "%s | NatKhat AI",
   },
   description: "AI-powered astrology guidance for modern seekers.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Nat Khat AI",
+    title: "NatKhat AI",
   },
   formatDetection: {
     telephone: false,

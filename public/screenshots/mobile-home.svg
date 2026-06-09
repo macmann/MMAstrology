@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 720" role="img" aria-labelledby="title desc">
-  <title id="title">Nat Khat AI mobile home screen</title>
-  <desc id="desc">A mobile mockup of the Nat Khat AI landing page with purple cosmic styling.</desc>
+  <title id="title">NatKhat AI mobile home screen</title>
+  <desc id="desc">A mobile mockup of the NatKhat AI landing page with purple cosmic styling.</desc>
   <defs>
     <linearGradient id="page" x1="74" x2="466" y1="0" y2="720" gradientUnits="userSpaceOnUse">
       <stop stop-color="#2a145c"/>
@@ -17,7 +17,7 @@
   <rect x="46" y="20" width="448" height="680" rx="44" fill="url(#page)" stroke="#ffffff" stroke-opacity="0.13"/>
   <circle cx="384" cy="104" r="110" fill="#facc15" opacity="0.16"/>
   <circle cx="122" cy="188" r="130" fill="#d946ef" opacity="0.16"/>
-  <text x="92" y="84" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">Nat Khat AI</text>
+  <text x="92" y="84" fill="#fde68a" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">NatKhat AI</text>
   <rect x="374" y="58" width="74" height="38" rx="19" fill="#ffffff" opacity="0.12"/>
   <text x="394" y="83" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700">Log in</text>
   <rect x="92" y="138" width="76" height="76" rx="26" fill="#ffffff" opacity="0.1" stroke="#fde68a" stroke-opacity="0.24"/>

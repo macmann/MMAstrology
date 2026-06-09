@@ -25,7 +25,7 @@ export function DashboardClient({ availableAstrologers, displayName, profileInit
               🔮
             </div>
             <div className="min-w-0 pt-1">
-              <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">Nat Khat AI</p>
+              <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">NatKhat AI</p>
               <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">
                 {t("dashboard.title")}
               </h1>

@@ -1,6 +1,6 @@
 {
-  "name": "Nat Khat AI",
-  "short_name": "Nat Khat",
+  "name": "NatKhat AI",
+  "short_name": "NatKhat",
   "description": "AI-powered astrology guidance for modern seekers.",
   "id": "/",
   "start_url": "/",
@@ -23,7 +23,13 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/icons/app-icon.svg",
+      "src": "/icons/app-icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/app-icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
@@ -41,25 +47,30 @@
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow",
-      "label": "Nat Khat AI mobile home screen"
+      "label": "NatKhat AI mobile home screen"
     },
     {
       "src": "/screenshots/wide-home.svg",
       "sizes": "1280x720",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Nat Khat AI desktop install experience"
+      "label": "NatKhat AI desktop install experience"
     }
   ],
   "shortcuts": [
     {
       "name": "Start your profile",
       "short_name": "Register",
-      "description": "Create your birth profile and begin using Nat Khat AI.",
+      "description": "Create your birth profile and begin using NatKhat AI.",
       "url": "/register",
       "icons": [
         {
-          "src": "/icons/app-icon.svg",
+          "src": "/icons/app-icon-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        },
+        {
+          "src": "/icons/app-icon-512.svg",
           "sizes": "512x512",
           "type": "image/svg+xml"
         }
@@ -68,11 +79,16 @@
     {
       "name": "Log in",
       "short_name": "Login",
-      "description": "Open your existing Nat Khat AI account.",
+      "description": "Open your existing NatKhat AI account.",
       "url": "/login",
       "icons": [
         {
-          "src": "/icons/app-icon.svg",
+          "src": "/icons/app-icon-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        },
+        {
+          "src": "/icons/app-icon-512.svg",
           "sizes": "512x512",
           "type": "image/svg+xml"
         }
