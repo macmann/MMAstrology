@@ -8,13 +8,14 @@
     "prisma:generate": "npx prisma generate",
     "prisma:repair": "node scripts/repair-prisma-client.mjs",
     "prisma:migrate": "npx prisma migrate dev",
-    "predev": "npx prisma generate",
-    "prebuild": "npx prisma generate",
+    "predev": "npm run icons:generate && npx prisma generate",
+    "prebuild": "npm run icons:generate && npx prisma generate",
     "postinstall": "npx prisma generate",
     "prisma:reset": "npx prisma migrate reset",
     "prisma:seed": "npx prisma db seed",
     "render:build": "npm run prisma:deploy && npm run build",
-    "prisma:deploy": "npx prisma migrate deploy && npx prisma db seed"
+    "prisma:deploy": "npx prisma migrate deploy && npx prisma db seed",
+    "icons:generate": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "@prisma/client": "6",
@@ -22,6 +23,7 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "sharp": "^0.34.5",
     "prisma": "6",
     "dotenv": "latest",
     "typescript": "latest",
