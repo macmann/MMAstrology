@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { astrologers } from "@/lib/astrologers";
+import { checkAndResetCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./DashboardClient";
 
@@ -11,7 +12,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [user, activeProviderConfigs] = await Promise.all([
+  const [user, credits, activeProviderConfigs] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId },
       select: {
@@ -22,13 +23,14 @@ export default async function DashboardPage() {
         },
       },
     }),
+    checkAndResetCredits(session.userId),
     prisma.providerConfig.findMany({
       where: { isActive: true },
       select: { name: true },
     }),
   ]);
 
-  if (!user) {
+  if (!user || !credits) {
     redirect("/login");
   }
 
@@ -41,5 +43,13 @@ export default async function DashboardPage() {
   const displayName = user.name?.trim() || user.email;
   const profileInitials = displayName.slice(0, 2).toUpperCase();
 
-  return <DashboardClient availableAstrologers={[...availableAstrologers]} displayName={displayName} profileInitials={profileInitials} />;
+  return (
+    <DashboardClient
+      availableAstrologers={[...availableAstrologers]}
+      displayName={displayName}
+      profileInitials={profileInitials}
+      initialFreeCredits={credits.dailyFreeCredits}
+      initialPurchasedCredits={credits.purchasedCredits}
+    />
+  );
 }

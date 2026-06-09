@@ -2,15 +2,25 @@
 
 import Link from "next/link";
 import type { AstrologerProfile } from "@/lib/astrologers";
+import { DashboardCreditBalance } from "@/app/dashboard/DashboardCreditBalance";
+import { RewardedAdButton } from "@/components/RewardedAdButton";
 import { useLocalization } from "@/lib/localization";
 
 type DashboardClientProps = {
   availableAstrologers: AstrologerProfile[];
   displayName: string;
   profileInitials: string;
+  initialFreeCredits: number;
+  initialPurchasedCredits: number;
 };
 
-export function DashboardClient({ availableAstrologers, displayName, profileInitials }: Readonly<DashboardClientProps>) {
+export function DashboardClient({
+  availableAstrologers,
+  displayName,
+  profileInitials,
+  initialFreeCredits,
+  initialPurchasedCredits,
+}: Readonly<DashboardClientProps>) {
   const { t } = useLocalization();
 
   return (
@@ -45,7 +55,16 @@ export function DashboardClient({ availableAstrologers, displayName, profileInit
         </p>
       </header>
 
-      <section className="px-5 pb-6 pt-6">
+      <section className="-mt-6 space-y-3 px-5 pb-2">
+        <DashboardCreditBalance
+          key={`${initialFreeCredits}-${initialPurchasedCredits}`}
+          initialFreeCredits={initialFreeCredits}
+          initialPurchasedCredits={initialPurchasedCredits}
+        />
+        <RewardedAdButton dailyFreeCredits={initialFreeCredits} />
+      </section>
+
+      <section className="px-5 pb-6 pt-4">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.26em] text-violet-100/65">{t("dashboard.available")}</p>
