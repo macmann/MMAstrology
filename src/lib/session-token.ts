@@ -1,4 +1,4 @@
-export const AUTH_COOKIE_NAME = "mmastrology_session";
+export const AUTH_COOKIE_NAME = "natkhat_ai_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 type SessionPayload = {

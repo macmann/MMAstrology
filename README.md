@@ -1,4 +1,4 @@
-# AI Bay Din
+# Nat Khat AI
 
 A monolithic AI astrology web application built with Next.js App Router, Tailwind CSS, Prisma ORM, and PostgreSQL.
 

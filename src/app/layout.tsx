@@ -4,17 +4,17 @@ import { LocalizationProvider } from "@/lib/localization";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "AI Bay Din",
+  applicationName: "Nat Khat AI",
   title: {
-    default: "AI Bay Din",
-    template: "%s | AI Bay Din",
+    default: "Nat Khat AI",
+    template: "%s | Nat Khat AI",
   },
   description: "AI-powered astrology guidance for modern seekers.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "AI Bay Din",
+    title: "Nat Khat AI",
   },
   formatDetection: {
     telephone: false,
