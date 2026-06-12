@@ -14,7 +14,7 @@
     "prisma:reset": "npx prisma migrate reset",
     "prisma:seed": "npx prisma db seed",
     "render:build": "npm run prisma:deploy && npm run build",
-    "prisma:deploy": "npx prisma migrate deploy && npx prisma db seed",
+    "prisma:deploy": "node scripts/prisma-migrate-deploy-with-retry.mjs && npx prisma db seed",
     "icons:generate": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {

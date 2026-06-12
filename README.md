@@ -52,7 +52,7 @@ Build Command: npm install && npm run render:build
 Start Command: npm start
 ```
 
-`npm run render:build` runs `prisma migrate deploy`, seeds the default admin/provider data, and then runs the Next.js production build. `npm start` launches Next.js only; Prisma deploy/seed work is intentionally limited to the build phase so service restarts do not contend for Prisma's PostgreSQL advisory migration lock. If you configure Render manually in the dashboard, do not use only `npm run build` unless Render has already installed dependencies and you have a separate deploy step for Prisma migrations.
+`npm run render:build` runs `prisma migrate deploy`, seeds the default admin/provider data, and then runs the Next.js production build. The migration deploy step uses `scripts/prisma-migrate-deploy-with-retry.mjs`, which retries transient Prisma `P1002`/PostgreSQL advisory-lock timeouts that can happen when Render starts overlapping deploys or a previous migration session is still releasing its lock. `npm start` launches Next.js only; Prisma deploy/seed work is intentionally limited to the build phase so service restarts do not contend for Prisma's PostgreSQL advisory migration lock. If you configure Render manually in the dashboard, do not use only `npm run build` unless Render has already installed dependencies and you have a separate deploy step for Prisma migrations.
 
 If you reset the Render database after a deploy and then see Prisma `P2021` errors such as `The table public.User does not exist`, redeploy the web service so the `render:build` Prisma deploy step can recreate the schema on the active `DATABASE_URL`.
 
