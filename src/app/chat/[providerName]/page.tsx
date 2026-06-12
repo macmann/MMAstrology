@@ -75,7 +75,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     }),
     prisma.providerConfig.findUnique({
       where: { name: providerName },
-      select: { isActive: true },
+      select: { isActive: true, displayName: true, description: true },
     }),
   ]);
 
@@ -92,12 +92,15 @@ export default async function ChatPage({ params }: ChatPageProps) {
   }
 
   const provider = chatProviders[providerName];
+  const providerDisplayName = providerConfig.displayName.trim() || providerName;
+  const providerSubtitle = providerConfig.description.trim() || provider.subtitle;
 
   return (
     <ChatInterface
       providerName={providerName}
+      providerDisplayName={providerDisplayName}
       providerTitle={provider.title}
-      providerSubtitle={provider.subtitle}
+      providerSubtitle={providerSubtitle}
       providerSymbol={provider.symbol}
       providerGradient={provider.gradient}
     />

@@ -51,13 +51,25 @@ export async function GET() {
     }
   }
 
+  const providerConfigs = await prisma.providerConfig.findMany({
+    where: { name: { in: Array.from(latestByProvider.keys()) } },
+    select: { name: true, displayName: true, description: true },
+  });
+  const providerConfigByName = new Map(providerConfigs.map((provider) => [provider.name, provider]));
+
   return NextResponse.json({
-    history: Array.from(latestByProvider.values()).map((message) => ({
-      providerName: message.providerName,
-      snippet: toSnippet(message.content),
-      role: message.role,
-      createdAt: message.createdAt.toISOString(),
-    })),
+    history: Array.from(latestByProvider.values()).map((message) => {
+      const providerConfig = providerConfigByName.get(message.providerName);
+
+      return {
+        providerName: message.providerName,
+        providerDisplayName: providerConfig?.displayName?.trim() || message.providerName,
+        providerDescription: providerConfig?.description?.trim() || null,
+        snippet: toSnippet(message.content),
+        role: message.role,
+        createdAt: message.createdAt.toISOString(),
+      };
+    }),
   });
 }
 

@@ -22,21 +22,29 @@ const DEFAULT_DAILY_READING_PROMPT = [
 const DEFAULT_PROVIDERS = [
   {
     name: "Sayar Gyi",
+    displayName: "Sayar Gyi",
+    description: "Ancient Myanmar wisdom with clear timing and grounded answers.",
     systemPrompt:
       "You are Sayar Gyi, an expert astrologer. Tone: Traditional, authoritative tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
   },
   {
     name: "Daw Nilar",
+    displayName: "Daw Nilar",
+    description: "Gentle readings for love, healing, and emotional clarity.",
     systemPrompt:
       "You are Daw Nilar, an expert astrologer. Tone: Compassionate, psychological tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
   },
   {
     name: "Min Thet",
+    displayName: "Min Thet",
+    description: "Practical star-powered advice for decisions and next steps.",
     systemPrompt:
       "You are Min Thet, an expert astrologer. Tone: Modern, practical, direct tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
   },
   {
     name: "Ko Tar Yar",
+    displayName: "Ko Tar Yar",
+    description: "Witty, direct insights that cut through confusion with heart.",
     systemPrompt:
       "You are Ko Tar Yar, an expert astrologer. Tone: Witty, slightly cynical, but insightful tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
   },
@@ -64,18 +72,32 @@ async function main() {
       prisma.providerConfig.upsert({
         where: { name: provider.name },
         update: {},
-        create: { name: provider.name, isActive: true, systemPrompt: provider.systemPrompt },
+        create: {
+          name: provider.name,
+          displayName: provider.displayName,
+          description: provider.description,
+          isActive: true,
+          systemPrompt: provider.systemPrompt,
+        },
       }),
     ),
   );
 
   await Promise.all(
-    DEFAULT_PROVIDERS.map((provider) =>
+    DEFAULT_PROVIDERS.flatMap((provider) => [
+      prisma.providerConfig.updateMany({
+        where: { name: provider.name, displayName: "" },
+        data: { displayName: provider.displayName },
+      }),
+      prisma.providerConfig.updateMany({
+        where: { name: provider.name, description: "" },
+        data: { description: provider.description },
+      }),
       prisma.providerConfig.updateMany({
         where: { name: provider.name, systemPrompt: "" },
         data: { systemPrompt: provider.systemPrompt },
       }),
-    ),
+    ]),
   );
 
   await prisma.promptConfig.upsert({

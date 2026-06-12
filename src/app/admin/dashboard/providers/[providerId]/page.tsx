@@ -27,6 +27,8 @@ export default async function ProviderDetailsPage({ params }: { params: Promise<
     select: {
       id: true,
       name: true,
+      displayName: true,
+      description: true,
       isActive: true,
       systemPrompt: true,
       updatedAt: true,
@@ -45,12 +47,20 @@ export default async function ProviderDetailsPage({ params }: { params: Promise<
 
     await requireAdmin();
 
+    const displayName = String(formData.get("displayName") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
     const systemPrompt = String(formData.get("systemPrompt") ?? "").trim();
     const isActive = formData.get("isActive") === "on";
+
+    if (!displayName || displayName.length > 80 || description.length > 280) {
+      return;
+    }
 
     const updatedProvider = await prisma.providerConfig.update({
       where: { id: actionProviderId },
       data: {
+        displayName,
+        description,
         isActive,
         systemPrompt,
       },
@@ -73,10 +83,11 @@ export default async function ProviderDetailsPage({ params }: { params: Promise<
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.35em] text-amber-200">Provider details</p>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-5xl">{providerConfig.name}</h1>
+              <h1 className="text-3xl font-black tracking-tight text-white sm:text-5xl">{providerConfig.displayName || providerConfig.name}</h1>
               <p className="mt-3 text-sm leading-6 text-violet-100/75">
-                Enable or disable this provider and edit the system prompt sent before every chat response.
+                Update the user-facing provider name and description, enable or disable this provider, and edit the system prompt sent before every chat response.
               </p>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Internal provider key: {providerConfig.name}</p>
             </div>
             <span
               className={`w-fit rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
@@ -105,6 +116,31 @@ export default async function ProviderDetailsPage({ params }: { params: Promise<
                   Disabled providers are blocked from chat and return an unavailable message to users.
                 </span>
               </span>
+            </label>
+
+
+            <label className="block text-sm font-bold text-slate-300">
+              Provider name
+              <input
+                name="displayName"
+                required
+                maxLength={80}
+                defaultValue={providerConfig.displayName || providerConfig.name}
+                className="mt-3 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-3 text-base font-bold text-white outline-none transition placeholder:text-violet-100/35 focus:border-amber-200/70 focus:ring-4 focus:ring-amber-200/10"
+                placeholder="Name shown to users"
+              />
+            </label>
+
+            <label className="block text-sm font-bold text-slate-300">
+              Provider description
+              <textarea
+                name="description"
+                rows={4}
+                maxLength={280}
+                defaultValue={providerConfig.description}
+                className="mt-3 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-4 text-base leading-7 text-white outline-none transition placeholder:text-violet-100/35 focus:border-amber-200/70 focus:ring-4 focus:ring-amber-200/10"
+                placeholder="Short description shown on the dashboard and chat header."
+              />
             </label>
 
             <label className="block text-sm font-bold text-slate-300">

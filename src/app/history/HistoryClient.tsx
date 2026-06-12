@@ -6,6 +6,8 @@ import { getAstrologerProfile } from "@/lib/astrologers";
 
 type HistorySummary = {
   providerName: string;
+  providerDisplayName?: string;
+  providerDescription?: string | null;
   snippet: string;
   role: "user" | "assistant";
   createdAt: string;
@@ -68,8 +70,8 @@ export function HistoryClient() {
     };
   }, []);
 
-  async function handleDeleteHistory(providerName: string) {
-    const shouldDelete = window.confirm(`Delete your consultation history with ${providerName}? This cannot be undone.`);
+  async function handleDeleteHistory(providerName: string, providerDisplayName: string) {
+    const shouldDelete = window.confirm(`Delete your consultation history with ${providerDisplayName}? This cannot be undone.`);
 
     if (!shouldDelete) {
       return;
@@ -143,6 +145,8 @@ export function HistoryClient() {
       ) : null}
       {history.map((item) => {
         const astrologer = getAstrologerProfile(item.providerName);
+        const providerDisplayName = item.providerDisplayName?.trim() || item.providerName;
+        const providerDescription = item.providerDescription?.trim();
         const isDeleting = deletingProviderName === item.providerName;
 
         return (
@@ -161,9 +165,9 @@ export function HistoryClient() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="truncate text-lg font-black text-slate-50">{item.providerName}</h3>
+                    <h3 className="truncate text-lg font-black text-slate-50">{providerDisplayName}</h3>
                     <p className="truncate text-xs font-bold uppercase tracking-[0.12em] text-violet-100/55">
-                      {astrologer?.honorific ?? "Cosmic Guide"}
+                      {providerDescription || astrologer?.honorific || "Cosmic Guide"}
                     </p>
                   </div>
                   <time className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[0.65rem] font-black text-amber-100" dateTime={item.createdAt}>
@@ -171,7 +175,7 @@ export function HistoryClient() {
                   </time>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-violet-100/75">
-                  <span className="font-black text-amber-100">{item.role === "assistant" ? item.providerName : "You"}:</span> {item.snippet}
+                  <span className="font-black text-amber-100">{item.role === "assistant" ? providerDisplayName : "You"}:</span> {item.snippet}
                 </p>
               </div>
             </div>
@@ -185,10 +189,10 @@ export function HistoryClient() {
               </Link>
               <button
                 type="button"
-                onClick={() => handleDeleteHistory(item.providerName)}
+                onClick={() => handleDeleteHistory(item.providerName, providerDisplayName)}
                 disabled={deletingProviderName !== null}
                 className="inline-flex w-full items-center justify-center rounded-[1.25rem] border border-rose-200/30 bg-rose-500/15 px-4 py-3 text-sm font-black text-rose-100 shadow-lg shadow-fuchsia-950/20 transition hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                aria-label={`Delete consultation history with ${item.providerName}`}
+                aria-label={`Delete consultation history with ${providerDisplayName}`}
               >
                 {isDeleting ? "Deleting…" : "Delete"}
               </button>
