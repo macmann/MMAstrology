@@ -3,6 +3,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prestart": "npm run prisma:deploy",
     "start": "next start",
     "lint": "eslint .",
     "prisma:generate": "npx prisma generate",
