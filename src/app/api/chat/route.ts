@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { checkAndResetCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
+import {
+  calculateAiCostUsd,
+  estimateChatInputTokens,
+  estimateTextTokens,
+  type TokenUsage,
+} from "@/lib/ai-usage";
 import { buildSystemPrompt } from "@/lib/provider-prompts";
 
 export const runtime = "nodejs";
@@ -12,6 +18,10 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
+
+type ProviderStreamChunk =
+  | { type: "content"; content: string }
+  | { type: "usage"; inputTokens?: number; outputTokens?: number };
 
 type ProviderConfig = {
   personaName: ChatProviderName;
@@ -59,7 +69,10 @@ function isChatProviderName(value: unknown): value is ChatProviderName {
 function normalizeApiKey(rawApiKey: string) {
   let apiKey = rawApiKey.trim();
 
-  if ((apiKey.startsWith('"') && apiKey.endsWith('"')) || (apiKey.startsWith("'") && apiKey.endsWith("'"))) {
+  if (
+    (apiKey.startsWith('"') && apiKey.endsWith('"')) ||
+    (apiKey.startsWith("'") && apiKey.endsWith("'"))
+  ) {
     apiKey = apiKey.slice(1, -1).trim();
   }
 
@@ -75,7 +88,11 @@ function normalizeApiKey(rawApiKey: string) {
 }
 
 function getApiKey(config: ProviderConfig) {
-  const rawApiKey = process.env[config.envKey] ?? (config.personaName === "Min Thet" ? process.env.GEMINI_API_KEY : undefined);
+  const rawApiKey =
+    process.env[config.envKey] ??
+    (config.personaName === "Min Thet"
+      ? process.env.GEMINI_API_KEY
+      : undefined);
 
   return rawApiKey ? normalizeApiKey(rawApiKey) : undefined;
 }
@@ -86,7 +103,9 @@ function assertHeaderSafeApiKey(apiKey: string, envKey: string) {
   }
 
   if (/[\r\n]/.test(apiKey)) {
-    throw new Error(`${envKey} contains line breaks. Paste only the raw API key value without newlines.`);
+    throw new Error(
+      `${envKey} contains line breaks. Paste only the raw API key value without newlines.`,
+    );
   }
 }
 
@@ -129,23 +148,35 @@ async function* streamOpenAiCompatibleProvider(options: {
   model: string;
   systemPrompt: string;
   messages: ChatMessage[];
-}) {
+  includeUsage?: boolean;
+}): AsyncGenerator<ProviderStreamChunk> {
+  const requestBody: Record<string, unknown> = {
+    model: options.model,
+    messages: [
+      { role: "system", content: options.systemPrompt },
+      ...options.messages,
+    ],
+    temperature: 0.8,
+    stream: true,
+  };
+
+  if (options.includeUsage) {
+    requestBody.stream_options = { include_usage: true };
+  }
+
   const response = await fetch(`${options.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${options.apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: options.model,
-      messages: [{ role: "system", content: options.systemPrompt }, ...options.messages],
-      temperature: 0.8,
-      stream: true,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
-    throw new Error(await readProviderError(response, "The AI provider returned an error."));
+    throw new Error(
+      await readProviderError(response, "The AI provider returned an error."),
+    );
   }
 
   if (!response.body) {
@@ -173,10 +204,20 @@ async function* streamOpenAiCompatibleProvider(options: {
       }
 
       const parsed = JSON.parse(data);
+      const usage = parsed?.usage;
+
+      if (usage) {
+        yield {
+          type: "usage",
+          inputTokens: usage.prompt_tokens,
+          outputTokens: usage.completion_tokens,
+        };
+      }
+
       const content = parsed?.choices?.[0]?.delta?.content;
 
       if (typeof content === "string") {
-        yield content;
+        yield { type: "content", content };
       }
     }
 
@@ -186,7 +227,12 @@ async function* streamOpenAiCompatibleProvider(options: {
   }
 }
 
-async function* streamAnthropicProvider(options: { apiKey: string; model: string; systemPrompt: string; messages: ChatMessage[] }) {
+async function* streamAnthropicProvider(options: {
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+  messages: ChatMessage[];
+}): AsyncGenerator<ProviderStreamChunk> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -205,7 +251,9 @@ async function* streamAnthropicProvider(options: { apiKey: string; model: string
   });
 
   if (!response.ok) {
-    throw new Error(await readProviderError(response, "Anthropic returned an error."));
+    throw new Error(
+      await readProviderError(response, "Anthropic returned an error."),
+    );
   }
 
   if (!response.body) {
@@ -229,10 +277,29 @@ async function* streamAnthropicProvider(options: { apiKey: string; model: string
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       const parsed = JSON.parse(data);
+      const messageUsage = parsed?.message?.usage;
+      const deltaUsage = parsed?.usage;
+
+      if (messageUsage) {
+        yield {
+          type: "usage",
+          inputTokens: messageUsage.input_tokens,
+          outputTokens: messageUsage.output_tokens,
+        };
+      }
+
+      if (deltaUsage) {
+        yield {
+          type: "usage",
+          inputTokens: deltaUsage.input_tokens,
+          outputTokens: deltaUsage.output_tokens,
+        };
+      }
+
       const text = parsed?.delta?.text;
 
       if (typeof text === "string") {
-        yield text;
+        yield { type: "content", content: text };
       }
     }
 
@@ -242,7 +309,12 @@ async function* streamAnthropicProvider(options: { apiKey: string; model: string
   }
 }
 
-async function* streamGoogleProvider(options: { apiKey: string; model: string; systemPrompt: string; messages: ChatMessage[] }) {
+async function* streamGoogleProvider(options: {
+  apiKey: string;
+  model: string;
+  systemPrompt: string;
+  messages: ChatMessage[];
+}): AsyncGenerator<ProviderStreamChunk> {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(options.apiKey)}`,
     {
@@ -266,7 +338,9 @@ async function* streamGoogleProvider(options: { apiKey: string; model: string; s
   );
 
   if (!response.ok) {
-    throw new Error(await readProviderError(response, "Google Gen AI returned an error."));
+    throw new Error(
+      await readProviderError(response, "Google Gen AI returned an error."),
+    );
   }
 
   if (!response.body) {
@@ -290,13 +364,23 @@ async function* streamGoogleProvider(options: { apiKey: string; model: string; s
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       const parsed = JSON.parse(data);
+      const usage = parsed?.usageMetadata;
+
+      if (usage) {
+        yield {
+          type: "usage",
+          inputTokens: usage.promptTokenCount,
+          outputTokens: usage.candidatesTokenCount,
+        };
+      }
+
       const content = parsed?.candidates?.[0]?.content?.parts
         ?.map((part: { text?: string }) => part.text)
         .filter((text: unknown): text is string => typeof text === "string")
         .join("\n");
 
       if (typeof content === "string") {
-        yield content;
+        yield { type: "content", content };
       }
     }
 
@@ -306,7 +390,11 @@ async function* streamGoogleProvider(options: { apiKey: string; model: string; s
   }
 }
 
-function streamProvider(config: ProviderConfig, systemPrompt: string, messages: ChatMessage[]) {
+function streamProvider(
+  config: ProviderConfig,
+  systemPrompt: string,
+  messages: ChatMessage[],
+) {
   const apiKey = getApiKey(config);
 
   if (!apiKey) {
@@ -324,6 +412,7 @@ function streamProvider(config: ProviderConfig, systemPrompt: string, messages: 
       model,
       systemPrompt,
       messages,
+      includeUsage: true,
     });
   }
 
@@ -390,14 +479,23 @@ export async function GET(request: Request) {
   const session = await getCurrentSession();
 
   if (!session) {
-    return NextResponse.json({ error: "You must be logged in to view this chat." }, { status: 401 });
+    return NextResponse.json(
+      { error: "You must be logged in to view this chat." },
+      { status: 401 },
+    );
   }
 
   const { searchParams } = new URL(request.url);
   const providerName = searchParams.get("providerName");
 
   if (!isChatProviderName(providerName)) {
-    return NextResponse.json({ error: "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar." }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar.",
+      },
+      { status: 400 },
+    );
   }
 
   const [credits, messages] = await Promise.all([
@@ -425,10 +523,17 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     providerName,
-    messages: messages.map((message: { id: string; role: "user" | "assistant"; content: string; createdAt: Date }) => ({
-      ...message,
-      createdAt: message.createdAt.toISOString(),
-    })),
+    messages: messages.map(
+      (message: {
+        id: string;
+        role: "user" | "assistant";
+        content: string;
+        createdAt: Date;
+      }) => ({
+        ...message,
+        createdAt: message.createdAt.toISOString(),
+      }),
+    ),
     credits: {
       dailyFreeCredits: credits.dailyFreeCredits,
       purchasedCredits: credits.purchasedCredits,
@@ -440,7 +545,10 @@ export async function POST(request: Request) {
   const session = await getCurrentSession();
 
   if (!session) {
-    return NextResponse.json({ error: "You must be logged in to chat." }, { status: 401 });
+    return NextResponse.json(
+      { error: "You must be logged in to chat." },
+      { status: 401 },
+    );
   }
 
   const body = await request.json();
@@ -448,11 +556,20 @@ export async function POST(request: Request) {
   const providerName = body.providerName;
 
   if (!message) {
-    return NextResponse.json({ error: "message is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "message is required." },
+      { status: 400 },
+    );
   }
 
   if (!isChatProviderName(providerName)) {
-    return NextResponse.json({ error: "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar." }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar.",
+      },
+      { status: 400 },
+    );
   }
 
   const userWithCredits = await checkAndResetCredits(session.userId);
@@ -461,8 +578,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "User was not found." }, { status: 404 });
   }
 
-  if (userWithCredits.dailyFreeCredits + userWithCredits.purchasedCredits <= 0) {
-    return NextResponse.json({ error: "You do not have enough credits to chat." }, { status: 403 });
+  if (
+    userWithCredits.dailyFreeCredits + userWithCredits.purchasedCredits <=
+    0
+  ) {
+    return NextResponse.json(
+      { error: "You do not have enough credits to chat." },
+      { status: 403 },
+    );
   }
 
   const [profile, previousMessages, providerConfig] = await Promise.all([
@@ -498,60 +621,142 @@ export async function POST(request: Request) {
   ]);
 
   if (!profile) {
-    return NextResponse.json({ error: "Please complete your astrological profile before chatting." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Please complete your astrological profile before chatting." },
+      { status: 400 },
+    );
   }
 
   if (!providerConfig?.isActive) {
-    return NextResponse.json({ error: `${providerName} is currently unavailable.` }, { status: 403 });
+    return NextResponse.json(
+      { error: `${providerName} is currently unavailable.` },
+      { status: 403 },
+    );
   }
 
-  const didDeductCredit = await deductOneCredit(session.userId, userWithCredits.dailyFreeCredits);
+  const didDeductCredit = await deductOneCredit(
+    session.userId,
+    userWithCredits.dailyFreeCredits,
+  );
 
   if (!didDeductCredit) {
-    return NextResponse.json({ error: "You do not have enough credits to chat." }, { status: 403 });
+    return NextResponse.json(
+      { error: "You do not have enough credits to chat." },
+      { status: 403 },
+    );
   }
 
   const config = PROVIDERS[providerName];
-  const systemPrompt = buildSystemPrompt(config, profile, providerConfig.systemPrompt);
+  const model = getModel(config);
+  const systemPrompt = buildSystemPrompt(
+    config,
+    profile,
+    providerConfig.systemPrompt,
+  );
   const conversationMessages = [
-    ...previousMessages.reverse().map((previousMessage: { role: "user" | "assistant"; content: string }) => ({
-      role: previousMessage.role,
-      content: previousMessage.content,
-    })),
+    ...previousMessages
+      .reverse()
+      .map(
+        (previousMessage: { role: "user" | "assistant"; content: string }) => ({
+          role: previousMessage.role,
+          content: previousMessage.content,
+        }),
+      ),
     { role: "user" as const, content: message },
   ];
   const encoder = new TextEncoder();
+  const startedAt = Date.now();
 
   const stream = new ReadableStream({
     async start(controller) {
       let reply = "";
+      let tokenUsage: TokenUsage = {
+        inputTokens: estimateChatInputTokens(
+          systemPrompt,
+          conversationMessages,
+        ),
+        outputTokens: 0,
+        estimated: true,
+      };
 
       try {
-        for await (const delta of streamProvider(config, systemPrompt, conversationMessages)) {
-          reply += delta;
-          controller.enqueue(encoder.encode(encodeStreamEvent("delta", { content: delta })));
+        for await (const chunk of streamProvider(
+          config,
+          systemPrompt,
+          conversationMessages,
+        )) {
+          if (chunk.type === "usage") {
+            tokenUsage = {
+              inputTokens:
+                typeof chunk.inputTokens === "number"
+                  ? chunk.inputTokens
+                  : tokenUsage.inputTokens,
+              outputTokens:
+                typeof chunk.outputTokens === "number"
+                  ? chunk.outputTokens
+                  : tokenUsage.outputTokens,
+              estimated: false,
+            };
+            continue;
+          }
+
+          reply += chunk.content;
+          controller.enqueue(
+            encoder.encode(
+              encodeStreamEvent("delta", { content: chunk.content }),
+            ),
+          );
         }
 
         if (!reply.trim()) {
           throw new Error("The AI provider returned an empty response.");
         }
 
-        await prisma.message.createMany({
-          data: [
-            {
+        if (tokenUsage.outputTokens === 0) {
+          tokenUsage = {
+            ...tokenUsage,
+            outputTokens: estimateTextTokens(reply),
+            estimated: true,
+          };
+        }
+
+        const durationMs = Math.max(0, Date.now() - startedAt);
+        const costUsd = calculateAiCostUsd(
+          model,
+          tokenUsage.inputTokens,
+          tokenUsage.outputTokens,
+        );
+
+        await prisma.$transaction([
+          prisma.message.createMany({
+            data: [
+              {
+                userId: session.userId,
+                providerName,
+                role: "user",
+                content: message,
+              },
+              {
+                userId: session.userId,
+                providerName,
+                role: "assistant",
+                content: reply.trim(),
+              },
+            ],
+          }),
+          prisma.aiUsageLog.create({
+            data: {
               userId: session.userId,
               providerName,
-              role: "user",
-              content: message,
+              model,
+              inputTokens: tokenUsage.inputTokens,
+              outputTokens: tokenUsage.outputTokens,
+              durationMs,
+              costUsd,
+              costEstimated: tokenUsage.estimated,
             },
-            {
-              userId: session.userId,
-              providerName,
-              role: "assistant",
-              content: reply.trim(),
-            },
-          ],
-        });
+          }),
+        ]);
 
         const credits = await prisma.user.findUnique({
           where: { id: session.userId },
@@ -561,12 +766,17 @@ export async function POST(request: Request) {
           },
         });
 
-        controller.enqueue(encoder.encode(encodeStreamEvent("done", { providerName, credits })));
+        controller.enqueue(
+          encoder.encode(encodeStreamEvent("done", { providerName, credits })),
+        );
       } catch (error) {
         controller.enqueue(
           encoder.encode(
             encodeStreamEvent("error", {
-              error: error instanceof Error ? error.message : "The AI provider could not complete this chat.",
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "The AI provider could not complete this chat.",
             }),
           ),
         );
