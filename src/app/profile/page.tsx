@@ -1,5 +1,5 @@
-import { ReadingsClient } from "@/app/readings/ReadingsClient";
+import { redirect } from "next/navigation";
 
 export default function ProfilePage() {
-  return <ReadingsClient view="profile" />;
+  redirect("/profile/settings");
 }

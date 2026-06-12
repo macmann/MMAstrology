@@ -174,9 +174,9 @@ export async function PUT(request: Request) {
         birthLocation: profileFields.birthLocation,
         ...(didBirthProfileChange
           ? {
-              lifeReadingEn: null,
-              lifeReadingMy: null,
-              lifeReadingGeneratedAt: null,
+              dailyReadingEn: null,
+              dailyReadingMy: null,
+              dailyReadingDate: null,
             }
           : {}),
       },

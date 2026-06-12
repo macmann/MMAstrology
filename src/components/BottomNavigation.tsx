@@ -39,6 +39,22 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    labelKey: "nav.lifeReading",
+    href: "/life-reading",
+    icon: (isActive) => (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
+        <path
+          d="M5.25 5.5c0-.97.78-1.75 1.75-1.75h10c.97 0 1.75.78 1.75 1.75v14.75l-2.85-1.7-2.85 1.7-2.85-1.7-2.85 1.7V5.5Z"
+          fill={isActive ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeLinejoin="round"
+          strokeWidth="1.8"
+        />
+        <path d="M8.5 8.25h7M8.5 11.25h7M8.5 14.25h4" stroke={isActive ? "#170d39" : "currentColor"} strokeLinecap="round" strokeWidth="1.7" />
+      </svg>
+    ),
+  },
+  {
     labelKey: "nav.profile",
     href: "/profile/settings",
     icon: () => (
@@ -74,7 +90,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="z-30 -mx-5 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2" aria-label="Primary">
-      <div className="grid grid-cols-4 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.62rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
+      <div className="grid grid-cols-5 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.56rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -83,7 +99,7 @@ export function BottomNavigation() {
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`group flex min-h-[4.15rem] flex-col items-center justify-center gap-1 rounded-[1.65rem] px-2 py-2 transition active:scale-[0.98] ${
+              className={`group flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-[1.65rem] px-1 py-2 transition active:scale-[0.98] ${
                 isActive
                   ? "bg-amber-200/15 text-amber-100 shadow-inner shadow-amber-100/10"
                   : "text-violet-100/55 hover:bg-white/[0.06] hover:text-violet-50"
