@@ -152,7 +152,9 @@ async function* streamOpenAiCompatibleProvider(options: {
   messages: ChatMessage[];
   maxOutputTokens: number;
   includeUsage?: boolean;
+  maxTokensParameter?: "max_tokens" | "max_completion_tokens";
 }): AsyncGenerator<ProviderStreamChunk> {
+  const maxTokensParameter = options.maxTokensParameter ?? "max_tokens";
   const requestBody: Record<string, unknown> = {
     model: options.model,
     messages: [
@@ -160,7 +162,7 @@ async function* streamOpenAiCompatibleProvider(options: {
       ...options.messages,
     ],
     temperature: 0.8,
-    max_tokens: options.maxOutputTokens,
+    [maxTokensParameter]: options.maxOutputTokens,
     stream: true,
   };
 
@@ -422,6 +424,7 @@ function streamProvider(
       messages,
       maxOutputTokens,
       includeUsage: true,
+      maxTokensParameter: "max_completion_tokens",
     });
   }
 
