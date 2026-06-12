@@ -76,7 +76,13 @@ function ReadingPanel({ eyebrow, title, children }: Readonly<{ eyebrow: string; 
   );
 }
 
-export function ReadingsClient() {
+type ReadingView = "profile" | "daily";
+
+type ReadingsClientProps = {
+  view?: ReadingView;
+};
+
+export function ReadingsClient({ view = "profile" }: Readonly<ReadingsClientProps>) {
   const { language, t } = useLocalization();
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [error, setError] = useState("");
@@ -121,6 +127,10 @@ export function ReadingsClient() {
   const translatedElement = blueprint ? t(elementTranslationKeys[blueprint.element]) : "";
   const overallReading = blueprint?.overallReading[language] || blueprint?.overallReading.en || blueprint?.overallReading.my || "";
   const dailyReading = blueprint?.dailyReading[language] || blueprint?.dailyReading.en || blueprint?.dailyReading.my || "";
+  const pageCopy =
+    view === "daily"
+      ? { eyebrow: t("readings.dailyEyebrow"), title: t("readings.dailyTitle"), subtitle: t("readings.dailySubtitle") }
+      : { eyebrow: t("readings.profileEyebrow"), title: t("readings.profileTitle"), subtitle: t("readings.profileSubtitle") };
 
   return (
     <>
@@ -128,9 +138,9 @@ export function ReadingsClient() {
         <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber-200/20 blur-3xl" />
         <div className="absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-fuchsia-400/20 blur-3xl" />
         <div className="relative">
-          <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">{t("readings.eyebrow")}</p>
-          <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">{t("readings.title")}</h1>
-          <p className="mt-4 text-sm leading-6 text-violet-100/80">{t("readings.subtitle")}</p>
+          <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">{pageCopy.eyebrow}</p>
+          <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">{pageCopy.title}</h1>
+          <p className="mt-4 text-sm leading-6 text-violet-100/80">{pageCopy.subtitle}</p>
         </div>
       </header>
 
@@ -194,36 +204,40 @@ export function ReadingsClient() {
               </div>
             </section>
 
-            <ReadingPanel eyebrow={t("readings.lifeReading")} title={t("readings.yourReading")}>
-              <p className="whitespace-pre-line">{overallReading}</p>
-              {blueprint.lifeReadingGeneratedAt ? (
-                <p className="mt-4 text-xs font-bold text-violet-100/50">
-                  {t("readings.savedOnce", {
-                    date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    }).format(new Date(blueprint.lifeReadingGeneratedAt)),
-                  })}
-                </p>
-              ) : null}
-            </ReadingPanel>
+            {view === "profile" ? (
+              <ReadingPanel eyebrow={t("readings.lifeReading")} title={t("readings.yourReading")}>
+                <p className="whitespace-pre-line">{overallReading}</p>
+                {blueprint.lifeReadingGeneratedAt ? (
+                  <p className="mt-4 text-xs font-bold text-violet-100/50">
+                    {t("readings.savedOnce", {
+                      date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }).format(new Date(blueprint.lifeReadingGeneratedAt)),
+                    })}
+                  </p>
+                ) : null}
+              </ReadingPanel>
+            ) : null}
 
-            <ReadingPanel eyebrow={t("readings.todayEyebrow")} title={t("readings.dailyReading")}>
-              <p className="mb-3 text-sm font-black text-amber-100">{t("readings.todayLoveBusinessHealth")}</p>
-              <p className="whitespace-pre-line">{dailyReading}</p>
-              {blueprint.dailyReadingDate ? (
-                <p className="mt-4 text-xs font-bold text-violet-100/50">
-                  {t("readings.generatedToday", {
-                    date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    }).format(new Date(blueprint.dailyReadingDate)),
-                  })}
-                </p>
-              ) : null}
-            </ReadingPanel>
+            {view === "daily" ? (
+              <ReadingPanel eyebrow={t("readings.todayEyebrow")} title={t("readings.dailyReading")}>
+                <p className="mb-3 text-sm font-black text-amber-100">{t("readings.todayLoveBusinessHealth")}</p>
+                <p className="whitespace-pre-line">{dailyReading}</p>
+                {blueprint.dailyReadingDate ? (
+                  <p className="mt-4 text-xs font-bold text-violet-100/50">
+                    {t("readings.generatedToday", {
+                      date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }).format(new Date(blueprint.dailyReadingDate)),
+                    })}
+                  </p>
+                ) : null}
+              </ReadingPanel>
+            ) : null}
           </>
         ) : null}
 
