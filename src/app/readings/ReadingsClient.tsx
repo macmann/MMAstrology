@@ -77,15 +77,24 @@ function ReadingPanel({ eyebrow, title, children }: Readonly<{ eyebrow: string; 
 }
 
 const dailyAspectDefinitions = [
-  { key: "love", labelKey: "readings.aspectLove", icon: "💗", aliases: ["Love"] },
-  { key: "business", labelKey: "readings.aspectBusiness", icon: "💼", aliases: ["Business", "Career", "Work"] },
-  { key: "health", labelKey: "readings.aspectHealth", icon: "🌿", aliases: ["Health", "Wellness"] },
-  { key: "dos", labelKey: "readings.aspectDos", icon: "✨", aliases: ["Dos", "Do"] },
-  { key: "donts", labelKey: "readings.aspectDonts", icon: "🌘", aliases: ["Don'ts", "Donts", "Do not", "Don’ts"] },
+  { key: "love", group: "core", labelKey: "readings.aspectLove", icon: "💗", aliases: ["Love"] },
+  { key: "business", group: "core", labelKey: "readings.aspectBusiness", icon: "💼", aliases: ["Business", "Career", "Work"] },
+  { key: "health", group: "core", labelKey: "readings.aspectHealth", icon: "🌿", aliases: ["Health", "Wellness"] },
+  { key: "dos", group: "guidance", labelKey: "readings.aspectDos", icon: "✨", aliases: ["Dos", "Do"] },
+  { key: "donts", group: "guidance", labelKey: "readings.aspectDonts", icon: "🌘", aliases: ["Don'ts", "Donts", "Do not", "Don’ts"] },
 ] as const;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function cleanGeneralGuidanceBody(value: string) {
+  return value
+    .replace(/\b(?:Love|Business|Career|Work|Health|Wellness)\s*(?:[:：—–-])\s*/gi, "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildDailyAspectCards(reading: string) {
@@ -131,16 +140,24 @@ function buildDailyAspectCards(reading: string) {
       .map((piece) => piece.trim())
       .filter(Boolean);
 
-    return dailyAspectDefinitions.map((definition, index) => ({
-      ...definition,
-      body: fallbackPieces[index] || trimmedReading,
-    }));
+    return dailyAspectDefinitions.map((definition, index) => {
+      const body = fallbackPieces[index] || trimmedReading;
+
+      return {
+        ...definition,
+        body: definition.group === "guidance" ? cleanGeneralGuidanceBody(body) : body,
+      };
+    });
   }
 
-  return dailyAspectDefinitions.map((definition) => ({
-    ...definition,
-    body: bodies.get(definition.key) || trimmedReading,
-  }));
+  return dailyAspectDefinitions.map((definition) => {
+    const body = bodies.get(definition.key) || trimmedReading;
+
+    return {
+      ...definition,
+      body: definition.group === "guidance" ? cleanGeneralGuidanceBody(body) : body,
+    };
+  });
 }
 
 type ReadingView = "life" | "daily";
@@ -311,23 +328,47 @@ export function ReadingsClient({ view = "life" }: Readonly<ReadingsClientProps>)
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {dailyAspectCards.map((aspect) => (
-                    <article
-                      key={aspect.key}
-                      className="relative overflow-hidden rounded-[1.65rem] border border-white/10 bg-white/[0.075] p-5 shadow-xl shadow-violet-950/20 backdrop-blur"
-                    >
-                      <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-fuchsia-300/10 blur-2xl" />
-                      <div className="relative">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-inner shadow-white/10">
-                            {aspect.icon}
-                          </span>
-                          <h3 className="text-lg font-black text-white">{t(aspect.labelKey)}</h3>
+                  {dailyAspectCards
+                    .filter((aspect) => aspect.group === "core")
+                    .map((aspect) => (
+                      <article
+                        key={aspect.key}
+                        className="relative overflow-hidden rounded-[1.65rem] border border-white/10 bg-white/[0.075] p-5 shadow-xl shadow-violet-950/20 backdrop-blur"
+                      >
+                        <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-fuchsia-300/10 blur-2xl" />
+                        <div className="relative">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-inner shadow-white/10">
+                              {aspect.icon}
+                            </span>
+                            <h3 className="text-lg font-black text-white">{t(aspect.labelKey)}</h3>
+                          </div>
+                          <p className="mt-4 whitespace-pre-line text-sm leading-6 text-violet-50/80">{aspect.body}</p>
                         </div>
-                        <p className="mt-4 whitespace-pre-line text-sm leading-6 text-violet-50/80">{aspect.body}</p>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    ))}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {dailyAspectCards
+                    .filter((aspect) => aspect.group === "guidance")
+                    .map((aspect) => (
+                      <article
+                        key={aspect.key}
+                        className="relative overflow-hidden rounded-[1.65rem] border border-amber-100/15 bg-amber-100/[0.08] p-5 shadow-xl shadow-violet-950/20 backdrop-blur"
+                      >
+                        <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-amber-200/10 blur-2xl" />
+                        <div className="relative">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-inner shadow-white/10">
+                              {aspect.icon}
+                            </span>
+                            <h3 className="text-lg font-black text-white">{t(aspect.labelKey)}</h3>
+                          </div>
+                          <p className="mt-4 whitespace-pre-line text-sm leading-6 text-violet-50/80">{aspect.body}</p>
+                        </div>
+                      </article>
+                    ))}
                 </div>
               </section>
             ) : null}
