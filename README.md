@@ -52,9 +52,9 @@ Build Command: npm install && npm run render:build
 Start Command: npm start
 ```
 
-`npm run render:build` runs `prisma migrate deploy`, seeds the default admin/provider data, and then runs the Next.js production build. `npm start` also runs the same Prisma deploy/seed step before launching Next.js, so a service restart repairs a newly reset or empty database before the app accepts traffic. If you configure Render manually in the dashboard, do not use only `npm run build` unless Render has already installed dependencies and you have a separate deploy step for Prisma migrations.
+`npm run render:build` runs `prisma migrate deploy`, seeds the default admin/provider data, and then runs the Next.js production build. `npm start` launches Next.js only; Prisma deploy/seed work is intentionally limited to the build phase so service restarts do not contend for Prisma's PostgreSQL advisory migration lock. If you configure Render manually in the dashboard, do not use only `npm run build` unless Render has already installed dependencies and you have a separate deploy step for Prisma migrations.
 
-If you reset the Render database after a deploy and then see Prisma `P2021` errors such as `The table public.User does not exist`, restart or redeploy the web service so the `prestart` Prisma deploy step can recreate the schema on the active `DATABASE_URL`.
+If you reset the Render database after a deploy and then see Prisma `P2021` errors such as `The table public.User does not exist`, redeploy the web service so the `render:build` Prisma deploy step can recreate the schema on the active `DATABASE_URL`.
 
 Required Render environment variables are `DATABASE_URL`, `JWT_SECRET`, and any AI provider keys you plan to use. The one-time overall sign reading uses `OPENAI_API_KEY` and the optional `lifereadingmodel` override, which defaults to `gpt-5.5`. The included `render.yaml` can create and link the PostgreSQL database automatically when deploying from the blueprint.
 
