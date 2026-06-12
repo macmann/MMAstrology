@@ -39,8 +39,8 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    labelKey: "nav.profileReading",
-    href: "/profile",
+    labelKey: "nav.profile",
+    href: "/profile/settings",
     icon: () => (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
         <path d="M12 2.75 14.75 9 21 12l-6.25 3L12 21.25 9.25 15 3 12l6.25-3L12 2.75Z" fill="currentColor" />
