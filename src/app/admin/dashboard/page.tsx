@@ -8,6 +8,11 @@ import {
   DAILY_READING_PROMPT_KEY,
 } from "@/lib/life-reading";
 import { prisma } from "@/lib/prisma";
+import {
+  CHAT_HISTORY_CONTEXT_PROMPT_KEY,
+  parseChatHistoryContextSetting,
+  serializeChatHistoryContextSetting,
+} from "@/lib/chat-settings";
 
 type ProviderSummary = {
   id: string;
@@ -208,6 +213,25 @@ export default async function AdminDashboardPage() {
     revalidatePath(`/admin/dashboard/providers/${provider.id}`);
   }
 
+  async function updateChatHistoryContextSetting(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+
+    const enabled = formData.get("chatHistoryContextEnabled") === "on";
+
+    await prisma.promptConfig.upsert({
+      where: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY },
+      update: { prompt: serializeChatHistoryContextSetting(enabled) },
+      create: {
+        key: CHAT_HISTORY_CONTEXT_PROMPT_KEY,
+        prompt: serializeChatHistoryContextSetting(enabled),
+      },
+    });
+
+    revalidatePath("/admin/dashboard");
+  }
+
   async function updateDailyReadingPrompt(formData: FormData) {
     "use server";
 
@@ -243,6 +267,7 @@ export default async function AdminDashboardPage() {
     aiCostSummary,
     providerConfigs,
     dailyPromptConfig,
+    chatHistoryContextConfig,
     users,
   ] = await Promise.all([
     prisma.user.count(),
@@ -268,6 +293,9 @@ export default async function AdminDashboardPage() {
     }),
     prisma.promptConfig.findUnique({
       where: { key: DAILY_READING_PROMPT_KEY },
+    }),
+    prisma.promptConfig.findUnique({
+      where: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY },
     }),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
@@ -295,6 +323,9 @@ export default async function AdminDashboardPage() {
   const dailyReadingPrompt =
     dailyPromptConfig?.prompt ?? DEFAULT_DAILY_READING_PROMPT;
   const managedUsers = users as UserSummary[];
+  const isChatHistoryContextEnabled = parseChatHistoryContextSetting(
+    chatHistoryContextConfig?.prompt,
+  );
   const activeProviderCount = providers.filter(
     (provider) => provider.isActive,
   ).length;
@@ -385,7 +416,7 @@ export default async function AdminDashboardPage() {
           </article>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-4">
+        <section className="grid gap-5 lg:grid-cols-5">
           <a
             href="#providers"
             className="rounded-[2rem] border border-amber-200/20 bg-amber-200 px-6 py-5 text-[#160b2f] shadow-2xl shadow-violet-950/20 transition hover:bg-amber-100"
@@ -427,6 +458,20 @@ export default async function AdminDashboardPage() {
               and AI cost.
             </p>
           </Link>
+          <a
+            href="#chat-context"
+            className="rounded-[2rem] border border-white/15 bg-white/[0.08] px-6 py-5 shadow-2xl shadow-violet-950/20 backdrop-blur-xl transition hover:border-amber-200/35 hover:bg-white/[0.12]"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">
+              Privacy
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-white">
+              Chat context
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Toggle whether recent chat history is sent to the LLM.
+            </p>
+          </a>
           <Link
             href="/dashboard"
             className="rounded-[2rem] border border-white/15 bg-white/[0.08] px-6 py-5 shadow-2xl shadow-violet-950/20 backdrop-blur-xl transition hover:border-amber-200/35 hover:bg-white/[0.12]"
@@ -537,6 +582,54 @@ export default async function AdminDashboardPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section
+          id="chat-context"
+          className="scroll-mt-8 rounded-[2rem] border border-white/15 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/20 backdrop-blur-xl"
+        >
+          <div className="mb-5">
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-slate-500">
+              Chat context
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-white">
+              LLM chat history setting
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Control whether previous messages from the same user and provider
+              are included in future LLM requests. Conversation history remains
+              saved for users either way.
+            </p>
+          </div>
+
+          <form action={updateChatHistoryContextSetting} className="grid gap-4">
+            <label className="flex items-start gap-3 rounded-2xl border border-white/15 bg-[#100a29]/80 p-4">
+              <input
+                name="chatHistoryContextEnabled"
+                type="checkbox"
+                defaultChecked={isChatHistoryContextEnabled}
+                className="mt-1 h-5 w-5 rounded border-white/20 bg-white/10 accent-amber-200"
+              />
+              <span>
+                <span className="block text-base font-black text-white">
+                  Send recent chat history to the LLM
+                </span>
+                <span className="mt-1 block text-sm leading-6 text-violet-100/70">
+                  When enabled, the 10 most recent messages for that provider are
+                  sent as context. Turn this off to send only the new message,
+                  system prompt, and birth profile context.
+                </span>
+              </span>
+            </label>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+              >
+                Save chat context setting
+              </button>
+            </div>
+          </form>
         </section>
 
         <section

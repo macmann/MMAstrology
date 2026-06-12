@@ -9,6 +9,8 @@ const DEFAULT_ADMIN = {
   role: "ADMIN",
 };
 
+const CHAT_HISTORY_CONTEXT_PROMPT_KEY = "chat-history-context-enabled";
+
 const DEFAULT_DAILY_READING_PROMPT = [
   "Create the user's daily astrology reading from their saved birth profile and today's date.",
   "The reading must include: Your today reading of Love, Business, Health; plus general Dos and Don'ts for the day that are not limited to or grouped by Love, Business, or Health.",
@@ -104,6 +106,12 @@ async function main() {
     where: { key: "daily-reading" },
     update: {},
     create: { key: "daily-reading", prompt: DEFAULT_DAILY_READING_PROMPT },
+  });
+
+  await prisma.promptConfig.upsert({
+    where: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY },
+    update: {},
+    create: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY, prompt: "true" },
   });
 }
 

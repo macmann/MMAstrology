@@ -9,6 +9,10 @@ import {
   type TokenUsage,
 } from "@/lib/ai-usage";
 import { buildSystemPrompt } from "@/lib/provider-prompts";
+import {
+  CHAT_HISTORY_CONTEXT_PROMPT_KEY,
+  parseChatHistoryContextSetting,
+} from "@/lib/chat-settings";
 
 export const runtime = "nodejs";
 
@@ -613,27 +617,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const [profile, previousMessages, providerConfig] = await Promise.all([
+  const [profile, providerConfig, chatHistoryContextConfig] = await Promise.all([
     prisma.astrologicalProfile.findUnique({
       where: { userId: session.userId },
       select: {
         dob: true,
         birthTime: true,
         birthLocation: true,
-      },
-    }),
-    prisma.message.findMany({
-      where: {
-        userId: session.userId,
-        providerName,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 10,
-      select: {
-        role: true,
-        content: true,
       },
     }),
     prisma.providerConfig.findUnique({
@@ -643,6 +633,10 @@ export async function POST(request: Request) {
         systemPrompt: true,
         maxOutputTokens: true,
       },
+    }),
+    prisma.promptConfig.findUnique({
+      where: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY },
+      select: { prompt: true },
     }),
   ]);
 
@@ -659,6 +653,26 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
+
+  const isChatHistoryContextEnabled = parseChatHistoryContextSetting(
+    chatHistoryContextConfig?.prompt,
+  );
+  const previousMessages = isChatHistoryContextEnabled
+    ? await prisma.message.findMany({
+        where: {
+          userId: session.userId,
+          providerName,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+        select: {
+          role: true,
+          content: true,
+        },
+      })
+    : [];
 
   const didDeductCredit = await deductOneCredit(
     session.userId,
