@@ -34,6 +34,7 @@ model User {
   astrologicalProfile AstrologicalProfile?
   creditTransactions  CreditTransaction[]
   messages            Message[]
+  aiUsageLogs         AiUsageLog[]
 }
 
 model AstrologicalProfile {
@@ -46,9 +47,9 @@ model AstrologicalProfile {
   lifeReadingEn          String?   @db.Text
   lifeReadingMy          String?   @db.Text
   lifeReadingGeneratedAt DateTime?
-  dailyReadingEn          String?   @db.Text
-  dailyReadingMy          String?   @db.Text
-  dailyReadingDate        DateTime?
+  dailyReadingEn         String?   @db.Text
+  dailyReadingMy         String?   @db.Text
+  dailyReadingDate       DateTime?
 }
 
 model PromptConfig {
@@ -67,6 +68,24 @@ model CreditTransaction {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+model AiUsageLog {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerName  String
+  model         String
+  inputTokens   Int
+  outputTokens  Int
+  durationMs    Int
+  costUsd       Decimal  @default(0) @db.Decimal(12, 8)
+  costEstimated Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([model, createdAt])
 }
 
 model Message {
