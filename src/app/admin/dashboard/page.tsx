@@ -16,6 +16,7 @@ type ProviderSummary = {
   description: string;
   isActive: boolean;
   systemPrompt: string;
+  maxOutputTokens: number;
   updatedAt: Date;
 };
 
@@ -261,6 +262,7 @@ export default async function AdminDashboardPage() {
         description: true,
         isActive: true,
         systemPrompt: true,
+        maxOutputTokens: true,
         updatedAt: true,
       },
     }),
@@ -487,6 +489,9 @@ export default async function AdminDashboardPage() {
                     <p className="mt-3 line-clamp-2 text-sm leading-6 text-violet-100/75">
                       {provider.description ||
                         "No public description has been saved yet."}
+                    </p>
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Maximum output tokens: {provider.maxOutputTokens}
                     </p>
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       System prompt
