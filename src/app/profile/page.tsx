@@ -1,5 +1,5 @@
-import { ProfileClient } from "./ProfileClient";
+import { ReadingsClient } from "@/app/readings/ReadingsClient";
 
 export default function ProfilePage() {
-  return <ProfileClient />;
+  return <ReadingsClient />;
 }

@@ -18,6 +18,11 @@ type Blueprint = {
     en: string | null;
     my: string | null;
   };
+  dailyReading: {
+    en: string | null;
+    my: string | null;
+  };
+  dailyReadingDate: string | null;
   lifeReadingGeneratedAt: string | null;
 };
 
@@ -115,6 +120,7 @@ export function ReadingsClient() {
 
   const translatedElement = blueprint ? t(elementTranslationKeys[blueprint.element]) : "";
   const overallReading = blueprint?.overallReading[language] || blueprint?.overallReading.en || blueprint?.overallReading.my || "";
+  const dailyReading = blueprint?.dailyReading[language] || blueprint?.dailyReading.en || blueprint?.dailyReading.my || "";
 
   return (
     <>
@@ -145,7 +151,7 @@ export function ReadingsClient() {
               <p className="text-xs font-black uppercase tracking-[0.28em] text-rose-100/80">{t("readings.unavailable")}</p>
               <h2 className="text-2xl font-black text-white">{t("readings.openError")}</h2>
               <p className="text-sm leading-6 text-violet-100/75">{error}</p>
-              <Link href="/profile" className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-[#160b2f]">
+              <Link href="/profile/settings" className="inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-[#160b2f]">
                 {t("readings.reviewProfile")}
               </Link>
             </div>
@@ -188,7 +194,7 @@ export function ReadingsClient() {
               </div>
             </section>
 
-            <ReadingPanel eyebrow={t("readings.oneTimeReading")} title={t("readings.overallSignReading")}>
+            <ReadingPanel eyebrow={t("readings.lifeReading")} title={t("readings.yourReading")}>
               <p className="whitespace-pre-line">{overallReading}</p>
               {blueprint.lifeReadingGeneratedAt ? (
                 <p className="mt-4 text-xs font-bold text-violet-100/50">
@@ -198,6 +204,22 @@ export function ReadingsClient() {
                       day: "numeric",
                       year: "numeric",
                     }).format(new Date(blueprint.lifeReadingGeneratedAt)),
+                  })}
+                </p>
+              ) : null}
+            </ReadingPanel>
+
+            <ReadingPanel eyebrow={t("readings.todayEyebrow")} title={t("readings.dailyReading")}>
+              <p className="mb-3 text-sm font-black text-amber-100">{t("readings.todayLoveBusinessHealth")}</p>
+              <p className="whitespace-pre-line">{dailyReading}</p>
+              {blueprint.dailyReadingDate ? (
+                <p className="mt-4 text-xs font-bold text-violet-100/50">
+                  {t("readings.generatedToday", {
+                    date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }).format(new Date(blueprint.dailyReadingDate)),
                   })}
                 </p>
               ) : null}

@@ -34,6 +34,11 @@ export async function GET() {
         en: profile.lifeReadingEn,
         my: profile.lifeReadingMy,
       },
+      dailyReading: {
+        en: profile.dailyReadingEn,
+        my: profile.dailyReadingMy,
+      },
+      dailyReadingDate: profile.dailyReadingDate?.toISOString() ?? null,
       lifeReadingGeneratedAt: profile.lifeReadingGeneratedAt?.toISOString() ?? null,
     },
   });

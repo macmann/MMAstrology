@@ -1,5 +1,9 @@
-import { generateLifeReading } from "@/lib/life-reading";
+import { generateDailyReading, generateLifeReading } from "@/lib/life-reading";
 import { prisma } from "@/lib/prisma";
+
+function getUtcDayStart(date = new Date()) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
 
 export async function ensureLifeReadingForUser(userId: string) {
   const profile = await prisma.astrologicalProfile.findUnique({
@@ -12,21 +16,50 @@ export async function ensureLifeReadingForUser(userId: string) {
       lifeReadingEn: true,
       lifeReadingMy: true,
       lifeReadingGeneratedAt: true,
+      dailyReadingEn: true,
+      dailyReadingMy: true,
+      dailyReadingDate: true,
     },
   });
 
-  if (!profile || (profile.lifeReadingEn && profile.lifeReadingMy)) {
+  if (!profile) {
     return profile;
   }
 
-  const reading = await generateLifeReading(profile);
+  const today = getUtcDayStart();
+  const needsLifeReading = !profile.lifeReadingEn || !profile.lifeReadingMy;
+  const needsDailyReading =
+    !profile.dailyReadingEn ||
+    !profile.dailyReadingMy ||
+    !profile.dailyReadingDate ||
+    profile.dailyReadingDate.getTime() !== today.getTime();
+
+  if (!needsLifeReading && !needsDailyReading) {
+    return profile;
+  }
+
+  const [lifeReading, dailyReading] = await Promise.all([
+    needsLifeReading ? generateLifeReading(profile) : null,
+    needsDailyReading ? generateDailyReading(profile, today) : null,
+  ]);
 
   return prisma.astrologicalProfile.update({
     where: { id: profile.id },
     data: {
-      lifeReadingEn: reading.en,
-      lifeReadingMy: reading.my,
-      lifeReadingGeneratedAt: new Date(),
+      ...(lifeReading
+        ? {
+            lifeReadingEn: lifeReading.en,
+            lifeReadingMy: lifeReading.my,
+            lifeReadingGeneratedAt: new Date(),
+          }
+        : {}),
+      ...(dailyReading
+        ? {
+            dailyReadingEn: dailyReading.en,
+            dailyReadingMy: dailyReading.my,
+            dailyReadingDate: today,
+          }
+        : {}),
     },
   });
 }

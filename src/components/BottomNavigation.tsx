@@ -29,18 +29,6 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    labelKey: "nav.readings",
-    href: "/readings",
-    icon: () => (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
-        <path
-          d="M17.85 15.65A8.2 8.2 0 0 1 8.35 6.15 8.22 8.22 0 1 0 17.85 15.65Z"
-          fill="currentColor"
-        />
-      </svg>
-    ),
-  },
-  {
     labelKey: "nav.profile",
     href: "/profile",
     icon: () => (
@@ -76,7 +64,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="z-30 -mx-5 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2" aria-label="Primary">
-      <div className="grid grid-cols-4 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.68rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
+      <div className="grid grid-cols-3 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.68rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
