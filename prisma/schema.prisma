@@ -46,6 +46,16 @@ model AstrologicalProfile {
   lifeReadingEn          String?   @db.Text
   lifeReadingMy          String?   @db.Text
   lifeReadingGeneratedAt DateTime?
+  dailyReadingEn          String?   @db.Text
+  dailyReadingMy          String?   @db.Text
+  dailyReadingDate        DateTime?
+}
+
+model PromptConfig {
+  key       String   @id
+  prompt    String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CreditTransaction {

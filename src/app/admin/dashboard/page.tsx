@@ -3,6 +3,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
+import { DEFAULT_DAILY_READING_PROMPT, DAILY_READING_PROMPT_KEY } from "@/lib/life-reading";
 import { prisma } from "@/lib/prisma";
 
 type ProviderSummary = {
@@ -193,7 +194,30 @@ export default async function AdminDashboardPage() {
     revalidatePath(`/admin/dashboard/providers/${provider.id}`);
   }
 
-  const [userCount, bannedUserCount, providerConfigs, users] = await Promise.all([
+
+  async function updateDailyReadingPrompt(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+
+    const prompt = String(formData.get("dailyReadingPrompt") ?? "").trim() || DEFAULT_DAILY_READING_PROMPT;
+
+    await prisma.$transaction([
+      prisma.promptConfig.upsert({
+        where: { key: DAILY_READING_PROMPT_KEY },
+        update: { prompt },
+        create: { key: DAILY_READING_PROMPT_KEY, prompt },
+      }),
+      prisma.astrologicalProfile.updateMany({
+        data: { dailyReadingEn: null, dailyReadingMy: null, dailyReadingDate: null },
+      }),
+    ]);
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/profile");
+  }
+
+  const [userCount, bannedUserCount, providerConfigs, dailyPromptConfig, users] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { isBanned: true } }),
     prisma.providerConfig.findMany({
@@ -206,6 +230,7 @@ export default async function AdminDashboardPage() {
         updatedAt: true,
       },
     }),
+    prisma.promptConfig.findUnique({ where: { key: DAILY_READING_PROMPT_KEY } }),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -229,6 +254,7 @@ export default async function AdminDashboardPage() {
     }),
   ]);
   const providers = providerConfigs as ProviderSummary[];
+  const dailyReadingPrompt = dailyPromptConfig?.prompt ?? DEFAULT_DAILY_READING_PROMPT;
   const managedUsers = users as UserSummary[];
   const activeProviderCount = providers.filter((provider) => provider.isActive).length;
   const totalPurchasedCredits = managedUsers.reduce((total, user) => total + user.purchasedCredits, 0);
@@ -354,6 +380,35 @@ export default async function AdminDashboardPage() {
               </div>
             ))}
           </div>
+        </section>
+
+
+        <section id="daily-reading-prompt" className="scroll-mt-8 rounded-[2rem] border border-amber-200/20 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/20 backdrop-blur-xl">
+          <div className="mb-5">
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-amber-200">Daily reading prompt</p>
+            <h2 className="mt-2 text-2xl font-bold text-white">Your Reading daily prompt</h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Adjust the admin prompt used to generate each user&apos;s daily reading for Love, Business, Health, Dos, and Don&apos;ts.
+            </p>
+          </div>
+
+          <form action={updateDailyReadingPrompt} className="grid gap-4">
+            <label className="block text-sm font-bold text-slate-300">
+              Daily reading generation prompt
+              <textarea
+                name="dailyReadingPrompt"
+                required
+                rows={10}
+                defaultValue={dailyReadingPrompt}
+                className="mt-3 min-h-64 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-4 text-base leading-7 text-white outline-none transition placeholder:text-violet-100/35 focus:border-amber-200/70 focus:ring-4 focus:ring-amber-200/10"
+              />
+            </label>
+            <div className="flex justify-end">
+              <button type="submit" className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-amber-100">
+                Save daily prompt
+              </button>
+            </div>
+          </form>
         </section>
 
         <section id="users" className="scroll-mt-8 rounded-[2rem] border border-white/15 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/20 backdrop-blur-xl">

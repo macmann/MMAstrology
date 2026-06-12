@@ -54,7 +54,7 @@ function formatLedgerDate(value: string) {
   }).format(new Date(value));
 }
 
-export function ProfileClient() {
+export function ProfileSettingsClient() {
   const { language, setLanguage, t } = useLocalization();
   const [activeTab, setActiveTab] = useState<ProfileTab>("account");
   const [profileData, setProfileData] = useState<ProfilePayload | null>(null);
