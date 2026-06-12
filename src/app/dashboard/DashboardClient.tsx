@@ -81,8 +81,8 @@ export function DashboardClient({
           ) : null}
           {availableAstrologers.map((astrologer) => (
             <Link
-              key={astrologer.name}
-              href={`/chat/${encodeURIComponent(astrologer.name)}`}
+              key={astrologer.providerName}
+              href={`/chat/${encodeURIComponent(astrologer.providerName)}`}
               className="group grid grid-cols-[1fr_auto] items-center gap-3 rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-3 shadow-xl shadow-violet-950/20 backdrop-blur transition hover:border-amber-200/40 hover:bg-white/[0.12] active:scale-[0.99]"
             >
               <article className="min-w-0">

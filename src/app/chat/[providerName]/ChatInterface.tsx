@@ -21,6 +21,7 @@ type Credits = {
 
 type ChatInterfaceProps = {
   providerName: string;
+  providerDisplayName: string;
   providerTitle: string;
   providerSubtitle: string;
   providerSymbol: string;
@@ -226,6 +227,7 @@ function MarkdownMessage({ content }: { content: string }) {
 
 export function ChatInterface({
   providerName,
+  providerDisplayName,
   providerTitle,
   providerSubtitle,
   providerSymbol,
@@ -328,7 +330,7 @@ export function ChatInterface({
     const loadingMessage: ChatMessage = {
       id: createLocalId("assistant-loading"),
       role: "assistant",
-      content: t(THINKING_MESSAGE_KEYS[Math.floor(Math.random() * THINKING_MESSAGE_KEYS.length)], { providerName }),
+      content: t(THINKING_MESSAGE_KEYS[Math.floor(Math.random() * THINKING_MESSAGE_KEYS.length)], { providerName: providerDisplayName }),
       status: "sending",
     };
 
@@ -482,7 +484,7 @@ export function ChatInterface({
               {providerSymbol}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-lg font-black text-white">{providerName}</p>
+              <p className="truncate text-lg font-black text-white">{providerDisplayName}</p>
               <p className="truncate text-xs font-semibold text-violet-100/75">{providerTitle} · {providerSubtitle}</p>
             </div>
             {totalCredits !== null ? (
@@ -521,7 +523,7 @@ export function ChatInterface({
                     </div>
                     <h1 className="text-2xl font-black text-white">{t("chat.startTitle")}</h1>
                     <p className="mt-3 text-violet-100/65">
-                      {t("chat.startText", { providerName })}
+                      {t("chat.startText", { providerName: providerDisplayName })}
                     </p>
                   </div>
                 </div>
@@ -561,7 +563,7 @@ export function ChatInterface({
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
                   disabled={isInputDisabled}
-                  placeholder={isOutOfCredits ? t("chat.limit") : t("chat.placeholder", { providerName })}
+                  placeholder={isOutOfCredits ? t("chat.limit") : t("chat.placeholder", { providerName: providerDisplayName })}
                   rows={1}
                   className="max-h-36 min-h-12 flex-1 resize-none bg-transparent px-3 py-3 text-sm text-slate-50 outline-none placeholder:text-violet-100/65 disabled:cursor-not-allowed disabled:text-violet-100/65"
                   onKeyDown={(event) => {

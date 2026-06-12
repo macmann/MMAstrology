@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
-import { astrologers } from "@/lib/astrologers";
+import { astrologers, mergeAstrologerDisplayConfig } from "@/lib/astrologers";
 import { checkAndResetCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./DashboardClient";
@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     checkAndResetCredits(session.userId),
     prisma.providerConfig.findMany({
       where: { isActive: true },
-      select: { name: true },
+      select: { name: true, displayName: true, description: true },
     }),
   ]);
 
@@ -38,8 +38,13 @@ export default async function DashboardPage() {
     redirect("/onboarding");
   }
 
-  const activeProviderNames = new Set(activeProviderConfigs.map((provider) => provider.name));
-  const availableAstrologers = astrologers.filter((astrologer) => activeProviderNames.has(astrologer.name));
+  const activeProviderConfigByName = new Map(activeProviderConfigs.map((provider) => [provider.name, provider]));
+  const availableAstrologers = astrologers
+    .map((astrologer) => {
+      const providerConfig = activeProviderConfigByName.get(astrologer.providerName);
+      return providerConfig ? mergeAstrologerDisplayConfig(providerConfig) : null;
+    })
+    .filter((astrologer): astrologer is NonNullable<typeof astrologer> => Boolean(astrologer));
   const displayName = user.name?.trim() || user.email;
   const profileInitials = displayName.slice(0, 2).toUpperCase();
 

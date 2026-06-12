@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 type ProviderSummary = {
   id: string;
   name: string;
+  displayName: string;
+  description: string;
   isActive: boolean;
   systemPrompt: string;
   updatedAt: Date;
@@ -225,6 +227,8 @@ export default async function AdminDashboardPage() {
       select: {
         id: true,
         name: true,
+        displayName: true,
+        description: true,
         isActive: true,
         systemPrompt: true,
         updatedAt: true,
@@ -328,7 +332,7 @@ export default async function AdminDashboardPage() {
               <p className="text-sm font-medium uppercase tracking-[0.25em] text-slate-500">Provider configuration</p>
               <h2 className="mt-2 text-2xl font-bold text-white">Default astrology providers</h2>
               <p className="mt-2 text-sm leading-6 text-violet-100/70">
-                Toggle provider availability instantly for all users, or open a provider card to edit its system prompt instructions.
+                Toggle provider availability instantly for all users, or open a provider card to edit its user-facing name, description, and system prompt instructions.
               </p>
             </div>
           </div>
@@ -339,7 +343,7 @@ export default async function AdminDashboardPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <p className="font-semibold text-white">{provider.name}</p>
+                      <p className="font-semibold text-white">{provider.displayName || provider.name}</p>
                       <span
                         className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
                           provider.isActive
@@ -350,6 +354,8 @@ export default async function AdminDashboardPage() {
                         {provider.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Internal key: {provider.name}</p>
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-violet-100/75">{provider.description || "No public description has been saved yet."}</p>
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">System prompt</p>
                     <p className="mt-2 line-clamp-3 text-sm leading-6 text-violet-100/75">{getPromptPreview(provider.systemPrompt)}</p>
                     <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">Updated {provider.updatedAt.toISOString().slice(0, 10)}</p>
