@@ -11,10 +11,10 @@ const DEFAULT_ADMIN = {
 
 const DEFAULT_DAILY_READING_PROMPT = [
   "Create the user's daily astrology reading from their saved birth profile and today's date.",
-  "The reading must include: Your today reading of Love, Business, Health; and Dos and Don'ts in all three categories.",
+  "The reading must include: Your today reading of Love, Business, Health; plus general Dos and Don'ts for the day that are not limited to or grouped by Love, Business, or Health.",
   "Return strict JSON only with keys en and my. Do not include markdown or extra keys.",
   "Each language should be concise, warm, specific, and easy to scan.",
-  "Use the exact section labels in English: Love, Business, Health, Dos, Don'ts.",
+  "Use the exact section labels in English: Love, Business, Health, Dos, Don'ts. Keep Dos and Don'ts as standalone general guidance; do not prefix them with Love, Business, or Health.",
   "The my value must be a natural Burmese/Myanmar translation of the same reading, not a separate interpretation.",
   "Avoid deterministic promises and avoid medical/legal/financial advice.",
 ].join("\n");

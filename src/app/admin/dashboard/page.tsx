@@ -388,7 +388,7 @@ export default async function AdminDashboardPage() {
             <p className="text-sm font-medium uppercase tracking-[0.25em] text-amber-200">Daily reading prompt</p>
             <h2 className="mt-2 text-2xl font-bold text-white">Your Reading daily prompt</h2>
             <p className="mt-2 text-sm leading-6 text-violet-100/70">
-              Adjust the admin prompt used to generate each user&apos;s daily reading for Love, Business, Health, Dos, and Don&apos;ts.
+              Adjust the admin prompt used to generate each user&apos;s daily reading for Love, Business, Health, plus general Dos and Don&apos;ts.
             </p>
           </div>
 
