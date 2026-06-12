@@ -53,9 +53,9 @@ export async function POST(request: Request) {
       dob,
       birthTime,
       birthLocation,
-      lifeReadingEn: null,
-      lifeReadingMy: null,
-      lifeReadingGeneratedAt: null,
+      dailyReadingEn: null,
+      dailyReadingMy: null,
+      dailyReadingDate: null,
     },
     create: {
       userId: session.userId,

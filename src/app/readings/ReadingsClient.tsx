@@ -76,13 +76,80 @@ function ReadingPanel({ eyebrow, title, children }: Readonly<{ eyebrow: string; 
   );
 }
 
-type ReadingView = "profile" | "daily";
+const dailyAspectDefinitions = [
+  { key: "love", labelKey: "readings.aspectLove", icon: "💗", aliases: ["Love"] },
+  { key: "business", labelKey: "readings.aspectBusiness", icon: "💼", aliases: ["Business", "Career", "Work"] },
+  { key: "health", labelKey: "readings.aspectHealth", icon: "🌿", aliases: ["Health", "Wellness"] },
+  { key: "dos", labelKey: "readings.aspectDos", icon: "✨", aliases: ["Dos", "Do"] },
+  { key: "donts", labelKey: "readings.aspectDonts", icon: "🌘", aliases: ["Don'ts", "Donts", "Do not", "Don’ts"] },
+] as const;
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildDailyAspectCards(reading: string) {
+  const trimmedReading = reading.trim();
+
+  if (!trimmedReading) {
+    return dailyAspectDefinitions.map((definition) => ({ ...definition, body: "" }));
+  }
+
+  const aliasToKey = new Map<string, (typeof dailyAspectDefinitions)[number]["key"]>();
+  for (const definition of dailyAspectDefinitions) {
+    for (const alias of definition.aliases) {
+      aliasToKey.set(alias.toLowerCase(), definition.key);
+    }
+  }
+
+  const aliases = dailyAspectDefinitions.flatMap((definition) => definition.aliases).sort((a, b) => b.length - a.length);
+  const labelPattern = new RegExp(`(?:^|[\\n.!?။])\\s*(${aliases.map(escapeRegExp).join("|")})\\s*(?:[:：—–-])`, "gi");
+  const matches = [...trimmedReading.matchAll(labelPattern)].map((match) => ({
+    key: aliasToKey.get(match[1].toLowerCase()),
+    start: match.index ?? 0,
+    contentStart: (match.index ?? 0) + match[0].length,
+  }));
+
+  const bodies = new Map<(typeof dailyAspectDefinitions)[number]["key"], string>();
+
+  matches.forEach((match, index) => {
+    if (!match.key) {
+      return;
+    }
+
+    const nextMatch = matches[index + 1];
+    const body = trimmedReading.slice(match.contentStart, nextMatch?.start).trim();
+
+    if (body) {
+      bodies.set(match.key, body);
+    }
+  });
+
+  if (bodies.size < 2) {
+    const fallbackPieces = trimmedReading
+      .split(/(?:\n{2,}|(?<=[.!?။])\s+)/)
+      .map((piece) => piece.trim())
+      .filter(Boolean);
+
+    return dailyAspectDefinitions.map((definition, index) => ({
+      ...definition,
+      body: fallbackPieces[index] || trimmedReading,
+    }));
+  }
+
+  return dailyAspectDefinitions.map((definition) => ({
+    ...definition,
+    body: bodies.get(definition.key) || trimmedReading,
+  }));
+}
+
+type ReadingView = "life" | "daily";
 
 type ReadingsClientProps = {
   view?: ReadingView;
 };
 
-export function ReadingsClient({ view = "profile" }: Readonly<ReadingsClientProps>) {
+export function ReadingsClient({ view = "life" }: Readonly<ReadingsClientProps>) {
   const { language, t } = useLocalization();
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [error, setError] = useState("");
@@ -130,7 +197,8 @@ export function ReadingsClient({ view = "profile" }: Readonly<ReadingsClientProp
   const pageCopy =
     view === "daily"
       ? { eyebrow: t("readings.dailyEyebrow"), title: t("readings.dailyTitle"), subtitle: t("readings.dailySubtitle") }
-      : { eyebrow: t("readings.profileEyebrow"), title: t("readings.profileTitle"), subtitle: t("readings.profileSubtitle") };
+      : { eyebrow: t("readings.lifeEyebrow"), title: t("readings.lifeTitle"), subtitle: t("readings.lifeSubtitle") };
+  const dailyAspectCards = buildDailyAspectCards(dailyReading);
 
   return (
     <>
@@ -170,41 +238,43 @@ export function ReadingsClient({ view = "profile" }: Readonly<ReadingsClientProp
 
         {!isLoading && !error && blueprint ? (
           <>
-            <section className="cosmic-card">
-              <div className="relative flex items-start justify-between gap-5">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.32em] text-violet-100/60">{t("readings.primarySunSign")}</p>
-                  <div className="mt-4 flex items-center gap-4">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-5xl shadow-lg shadow-fuchsia-950/30">
-                      {blueprint.glyph}
-                    </div>
-                    <div>
-                      <h2 className="text-3xl font-black text-white">{t(signTranslationKeys[blueprint.sunSign])}</h2>
-                      <p className="mt-1 text-sm font-bold text-amber-100/80">
-                        {t("readings.elementLabel", { element: translatedElement })}
-                      </p>
+            {view === "life" ? (
+              <section className="cosmic-card">
+                <div className="relative flex items-start justify-between gap-5">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.32em] text-violet-100/60">{t("readings.primarySunSign")}</p>
+                    <div className="mt-4 flex items-center gap-4">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-[1.7rem] bg-gradient-to-br from-amber-200 via-fuchsia-300 to-violet-500 text-5xl shadow-lg shadow-fuchsia-950/30">
+                        {blueprint.glyph}
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-black text-white">{t(signTranslationKeys[blueprint.sunSign])}</h2>
+                        <p className="mt-1 text-sm font-bold text-amber-100/80">
+                          {t("readings.elementLabel", { element: translatedElement })}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="relative mt-6 grid gap-3 text-sm sm:grid-cols-3">
-                <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.birthDate")}</p>
-                  <p className="mt-2 font-bold text-white">{formatBirthDate(blueprint.dateOfBirth, language)}</p>
+                <div className="relative mt-6 grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.birthDate")}</p>
+                    <p className="mt-2 font-bold text-white">{formatBirthDate(blueprint.dateOfBirth, language)}</p>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.birthTime")}</p>
+                    <p className="mt-2 font-bold text-white">{blueprint.birthTime}</p>
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.location")}</p>
+                    <p className="mt-2 font-bold text-white">{blueprint.birthLocation}</p>
+                  </div>
                 </div>
-                <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.birthTime")}</p>
-                  <p className="mt-2 font-bold text-white">{blueprint.birthTime}</p>
-                </div>
-                <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-violet-100/50">{t("readings.location")}</p>
-                  <p className="mt-2 font-bold text-white">{blueprint.birthLocation}</p>
-                </div>
-              </div>
-            </section>
+              </section>
+            ) : null}
 
-            {view === "profile" ? (
+            {view === "life" ? (
               <ReadingPanel eyebrow={t("readings.lifeReading")} title={t("readings.yourReading")}>
                 <p className="whitespace-pre-line">{overallReading}</p>
                 {blueprint.lifeReadingGeneratedAt ? (
@@ -222,21 +292,44 @@ export function ReadingsClient({ view = "profile" }: Readonly<ReadingsClientProp
             ) : null}
 
             {view === "daily" ? (
-              <ReadingPanel eyebrow={t("readings.todayEyebrow")} title={t("readings.dailyReading")}>
-                <p className="mb-3 text-sm font-black text-amber-100">{t("readings.todayLoveBusinessHealth")}</p>
-                <p className="whitespace-pre-line">{dailyReading}</p>
-                {blueprint.dailyReadingDate ? (
-                  <p className="mt-4 text-xs font-bold text-violet-100/50">
-                    {t("readings.generatedToday", {
-                      date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }).format(new Date(blueprint.dailyReadingDate)),
-                    })}
-                  </p>
-                ) : null}
-              </ReadingPanel>
+              <section className="space-y-4">
+                <div className="rounded-[1.75rem] border border-amber-100/15 bg-amber-100/[0.08] p-5 shadow-xl shadow-violet-950/20 backdrop-blur">
+                  <p className="text-[0.66rem] font-black uppercase tracking-[0.32em] text-amber-100/70">{t("readings.todayEyebrow")}</p>
+                  <h2 className="mt-2 text-xl font-black tracking-tight text-white">{t("readings.dailyReading")}</h2>
+                  <p className="mt-3 text-sm font-bold leading-6 text-amber-100/85">{t("readings.todayLoveBusinessHealth")}</p>
+                  {blueprint.dailyReadingDate ? (
+                    <p className="mt-3 text-xs font-bold text-violet-100/50">
+                      {t("readings.generatedToday", {
+                        date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }).format(new Date(blueprint.dailyReadingDate)),
+                      })}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {dailyAspectCards.map((aspect) => (
+                    <article
+                      key={aspect.key}
+                      className="relative overflow-hidden rounded-[1.65rem] border border-white/10 bg-white/[0.075] p-5 shadow-xl shadow-violet-950/20 backdrop-blur"
+                    >
+                      <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-fuchsia-300/10 blur-2xl" />
+                      <div className="relative">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-inner shadow-white/10">
+                            {aspect.icon}
+                          </span>
+                          <h3 className="text-lg font-black text-white">{t(aspect.labelKey)}</h3>
+                        </div>
+                        <p className="mt-4 whitespace-pre-line text-sm leading-6 text-violet-50/80">{aspect.body}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             ) : null}
           </>
         ) : null}
