@@ -11,23 +11,14 @@ export async function UserAppLayout({ children, nextPath }: Readonly<{ children:
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  const [profile, user] = await Promise.all([
-    prisma.astrologicalProfile.findUnique({
-      where: { userId: session.userId },
-      select: { id: true },
-    }),
-    prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { name: true, email: true },
-    }),
-  ]);
+  const profile = await prisma.astrologicalProfile.findUnique({
+    where: { userId: session.userId },
+    select: { id: true },
+  });
 
   if (!profile) {
     redirect("/onboarding");
   }
 
-  const displayName = user?.name?.trim() || user?.email || "";
-  const profileInitial = displayName ? displayName.slice(0, 1).toUpperCase() : "✦";
-
-  return <AppShell profileInitial={profileInitial}>{children}</AppShell>;
+  return <AppShell>{children}</AppShell>;
 }

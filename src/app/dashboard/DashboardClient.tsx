@@ -42,7 +42,7 @@ export function DashboardClient({
             </div>
           </div>
           <Link
-            href="/profile"
+            href="/profile/settings"
             aria-label={t("dashboard.openProfile")}
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-amber-200/20 bg-amber-200 text-sm font-black text-[#160b2f] shadow-lg shadow-amber-950/20 transition hover:scale-105 hover:bg-amber-100 active:scale-95"
           >
