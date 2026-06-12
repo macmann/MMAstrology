@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { ReadingsClient } from "@/app/readings/ReadingsClient";
 
 export default function ReadingsPage() {
-  redirect("/profile");
+  return <ReadingsClient view="daily" />;
 }

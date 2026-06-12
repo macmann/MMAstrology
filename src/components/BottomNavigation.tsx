@@ -29,7 +29,17 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    labelKey: "nav.profile",
+    labelKey: "nav.dailyReading",
+    href: "/readings",
+    icon: () => (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
+        <path d="M12 3.25a8.75 8.75 0 1 0 8.75 8.75 6.4 6.4 0 0 1-8.75-8.75Z" fill="currentColor" opacity="0.95" />
+        <path d="m17.85 4.15.48 1.07 1.07.48-1.07.48-.48 1.07-.48-1.07-1.07-.48 1.07-.48.48-1.07Z" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    labelKey: "nav.profileReading",
     href: "/profile",
     icon: () => (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6">
@@ -64,7 +74,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="z-30 -mx-5 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2" aria-label="Primary">
-      <div className="grid grid-cols-3 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.68rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
+      <div className="grid grid-cols-4 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.62rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
