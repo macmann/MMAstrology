@@ -49,12 +49,10 @@ export function LoginForm() {
           🔮
         </div>
         <p className="mt-5 text-[0.68rem] font-black uppercase tracking-[0.42em] text-amber-200/90">NatKhat AI</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight text-white">{t("login.title")}</h1>
         <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-violet-100/72">
           {t("login.subtitle")}
         </p>
       </div>
-
 
       <div className="relative flex justify-center">
         <label className="sr-only" htmlFor="login-language">
