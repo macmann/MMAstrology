@@ -101,12 +101,13 @@ model Message {
 }
 
 model ProviderConfig {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  displayName  String   @default("")
-  description  String   @default("") @db.Text
-  isActive     Boolean  @default(true)
-  systemPrompt String   @default("") @db.Text
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String   @unique
+  displayName     String   @default("")
+  description     String   @default("") @db.Text
+  isActive        Boolean  @default(true)
+  systemPrompt    String   @default("") @db.Text
+  maxOutputTokens Int      @default(400)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

@@ -23,6 +23,8 @@ type ProviderStreamChunk =
   | { type: "content"; content: string }
   | { type: "usage"; inputTokens?: number; outputTokens?: number };
 
+const DEFAULT_MAX_OUTPUT_TOKENS = 400;
+
 type ProviderConfig = {
   personaName: ChatProviderName;
   tone: string;
@@ -148,6 +150,7 @@ async function* streamOpenAiCompatibleProvider(options: {
   model: string;
   systemPrompt: string;
   messages: ChatMessage[];
+  maxOutputTokens: number;
   includeUsage?: boolean;
 }): AsyncGenerator<ProviderStreamChunk> {
   const requestBody: Record<string, unknown> = {
@@ -157,6 +160,7 @@ async function* streamOpenAiCompatibleProvider(options: {
       ...options.messages,
     ],
     temperature: 0.8,
+    max_tokens: options.maxOutputTokens,
     stream: true,
   };
 
@@ -232,6 +236,7 @@ async function* streamAnthropicProvider(options: {
   model: string;
   systemPrompt: string;
   messages: ChatMessage[];
+  maxOutputTokens: number;
 }): AsyncGenerator<ProviderStreamChunk> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -244,7 +249,7 @@ async function* streamAnthropicProvider(options: {
       model: options.model,
       system: options.systemPrompt,
       messages: options.messages,
-      max_tokens: 1024,
+      max_tokens: options.maxOutputTokens,
       temperature: 0.8,
       stream: true,
     }),
@@ -314,6 +319,7 @@ async function* streamGoogleProvider(options: {
   model: string;
   systemPrompt: string;
   messages: ChatMessage[];
+  maxOutputTokens: number;
 }): AsyncGenerator<ProviderStreamChunk> {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(options.apiKey)}`,
@@ -332,6 +338,7 @@ async function* streamGoogleProvider(options: {
         })),
         generationConfig: {
           temperature: 0.8,
+          maxOutputTokens: options.maxOutputTokens,
         },
       }),
     },
@@ -394,6 +401,7 @@ function streamProvider(
   config: ProviderConfig,
   systemPrompt: string,
   messages: ChatMessage[],
+  maxOutputTokens: number,
 ) {
   const apiKey = getApiKey(config);
 
@@ -412,16 +420,29 @@ function streamProvider(
       model,
       systemPrompt,
       messages,
+      maxOutputTokens,
       includeUsage: true,
     });
   }
 
   if (config.personaName === "Daw Nilar") {
-    return streamAnthropicProvider({ apiKey, model, systemPrompt, messages });
+    return streamAnthropicProvider({
+      apiKey,
+      model,
+      systemPrompt,
+      messages,
+      maxOutputTokens,
+    });
   }
 
   if (config.personaName === "Min Thet") {
-    return streamGoogleProvider({ apiKey, model, systemPrompt, messages });
+    return streamGoogleProvider({
+      apiKey,
+      model,
+      systemPrompt,
+      messages,
+      maxOutputTokens,
+    });
   }
 
   return streamOpenAiCompatibleProvider({
@@ -430,6 +451,7 @@ function streamProvider(
     model,
     systemPrompt,
     messages,
+    maxOutputTokens,
   });
 }
 
@@ -616,6 +638,7 @@ export async function POST(request: Request) {
       select: {
         isActive: true,
         systemPrompt: true,
+        maxOutputTokens: true,
       },
     }),
   ]);
@@ -648,6 +671,8 @@ export async function POST(request: Request) {
 
   const config = PROVIDERS[providerName];
   const model = getModel(config);
+  const maxOutputTokens =
+    providerConfig.maxOutputTokens || DEFAULT_MAX_OUTPUT_TOKENS;
   const systemPrompt = buildSystemPrompt(
     config,
     profile,
@@ -684,6 +709,7 @@ export async function POST(request: Request) {
           config,
           systemPrompt,
           conversationMessages,
+          maxOutputTokens,
         )) {
           if (chunk.type === "usage") {
             tokenUsage = {

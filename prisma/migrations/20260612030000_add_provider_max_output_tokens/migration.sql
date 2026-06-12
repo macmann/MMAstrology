@@ -1,0 +1,1 @@
+ALTER TABLE "ProviderConfig" ADD COLUMN "maxOutputTokens" INTEGER NOT NULL DEFAULT 400;
