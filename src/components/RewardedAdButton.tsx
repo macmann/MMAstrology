@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type RewardedAdButtonProps = {
@@ -21,6 +21,7 @@ export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButton
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
   const [isClaiming, setIsClaiming] = useState(false);
+  const isClaimingRef = useRef(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
@@ -43,13 +44,14 @@ export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButton
   }, [countdown, isClaiming, isOpen]);
 
   useEffect(() => {
-    if (!isOpen || isClaiming || countdown !== 0) {
+    if (!isOpen || countdown !== 0 || isClaimingRef.current) {
       return;
     }
 
     let isMounted = true;
 
     async function claimReward() {
+      isClaimingRef.current = true;
       setIsClaiming(true);
       setError("");
 
@@ -84,6 +86,8 @@ export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButton
           setError("Network error while claiming this rewarded ad credit. Please try again.");
         }
       } finally {
+        isClaimingRef.current = false;
+
         if (isMounted) {
           setIsClaiming(false);
         }
@@ -95,7 +99,7 @@ export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButton
     return () => {
       isMounted = false;
     };
-  }, [countdown, isClaiming, isOpen, router]);
+  }, [countdown, isOpen, router]);
 
   if (dailyFreeCredits > 0) {
     return null;
@@ -104,6 +108,7 @@ export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButton
   function openRewardedAd() {
     setCountdown(COUNTDOWN_SECONDS);
     setError("");
+    isClaimingRef.current = false;
     setIsClaiming(false);
     setIsOpen(true);
   }
