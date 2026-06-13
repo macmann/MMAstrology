@@ -122,15 +122,31 @@ function getModel(config: ProviderConfig) {
 function parseSseDataBlocks(buffer: string) {
   return buffer
     .replaceAll("\r\n", "\n")
+    .replaceAll("\r", "\n")
     .split("\n\n")
     .map((block) =>
       block
         .split("\n")
-        .filter((line) => line.startsWith("data: "))
-        .map((line) => line.slice(6))
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).replace(/^ /, ""))
         .join("\n"),
     )
     .filter(Boolean);
+}
+
+function extractSseBlocks(buffer: string, done: boolean) {
+  const normalizedBuffer = buffer
+    .replaceAll("\r\n", "\n")
+    .replaceAll("\r", "\n");
+  const blocks = normalizedBuffer.split("\n\n");
+  const remainingBuffer = blocks.pop() ?? "";
+
+  if (done && remainingBuffer) {
+    blocks.push(remainingBuffer);
+    return { blocks, remainingBuffer: "" };
+  }
+
+  return { blocks, remainingBuffer };
 }
 
 async function readProviderError(response: Response, fallbackMessage: string) {
@@ -200,13 +216,8 @@ async function* streamOpenAiCompatibleProvider(options: {
   while (true) {
     const { done, value } = await reader.read();
     buffer += decoder.decode(value, { stream: !done });
-    const blocks = buffer.split("\n\n");
-    buffer = blocks.pop() ?? "";
-
-    if (done && buffer) {
-      blocks.push(buffer);
-      buffer = "";
-    }
+    const { blocks, remainingBuffer } = extractSseBlocks(buffer, done);
+    buffer = remainingBuffer;
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       if (data === "[DONE]") {
@@ -278,13 +289,8 @@ async function* streamAnthropicProvider(options: {
   while (true) {
     const { done, value } = await reader.read();
     buffer += decoder.decode(value, { stream: !done });
-    const blocks = buffer.split("\n\n");
-    buffer = blocks.pop() ?? "";
-
-    if (done && buffer) {
-      blocks.push(buffer);
-      buffer = "";
-    }
+    const { blocks, remainingBuffer } = extractSseBlocks(buffer, done);
+    buffer = remainingBuffer;
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       const parsed = JSON.parse(data);
@@ -387,13 +393,8 @@ async function* streamGoogleProvider(options: {
   while (true) {
     const { done, value } = await reader.read();
     buffer += decoder.decode(value, { stream: !done });
-    const blocks = buffer.split("\n\n");
-    buffer = blocks.pop() ?? "";
-
-    if (done && buffer) {
-      blocks.push(buffer);
-      buffer = "";
-    }
+    const { blocks, remainingBuffer } = extractSseBlocks(buffer, done);
+    buffer = remainingBuffer;
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       const parsed = JSON.parse(data);
