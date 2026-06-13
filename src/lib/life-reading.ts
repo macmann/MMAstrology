@@ -140,7 +140,7 @@ function normalizeDailyReadingPayload(payload: LifeReadingResponse, profile: Lif
   return { en, my };
 }
 
-function buildLifeReadingPrompt(profile: LifeReadingProfile) {
+function buildLifeReadingPrompt(profile: LifeReadingProfile, currentDateTime: Date = new Date()) {
   const { dateOfBirth, sunSign, element } = getProfileContext(profile);
 
   return [
@@ -149,6 +149,7 @@ function buildLifeReadingPrompt(profile: LifeReadingProfile) {
     "The en value must be warm, specific, non-confusing English, 160-220 words.",
     "The my value must be a natural Burmese/Myanmar translation of the same reading, not a separate interpretation.",
     "Avoid deterministic promises, medical/legal/financial advice, and daily predictions.",
+    `Current date and time: ${currentDateTime.toISOString()}`,
     `Date of birth: ${dateOfBirth}`,
     `Birth time: ${profile.birthTime}`,
     `Birth location: ${profile.birthLocation}`,
@@ -169,6 +170,7 @@ async function buildDailyReadingPrompt(profile: LifeReadingProfile, today: Date)
   return [
     adminPrompt,
     `Today: ${today.toISOString().slice(0, 10)}`,
+    `Current date and time: ${today.toISOString()}`,
     `Date of birth: ${dateOfBirth}`,
     `Birth time: ${profile.birthTime}`,
     `Birth location: ${profile.birthLocation}`,

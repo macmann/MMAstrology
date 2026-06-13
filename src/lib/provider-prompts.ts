@@ -13,9 +13,11 @@ export function buildSystemPrompt(
   config: ProviderPromptConfig,
   profile: { dob: Date; birthTime: string; birthLocation: string },
   savedSystemPrompt?: string | null,
+  currentDateTime: Date = new Date(),
 ) {
   const dob = profile.dob.toISOString().slice(0, 10);
   const basePrompt = savedSystemPrompt?.trim() || buildDefaultProviderPrompt(config);
+  const currentDateTimeIso = currentDateTime.toISOString();
 
-  return `${basePrompt}\n\nUser birth details: born on ${dob} at ${profile.birthTime} in ${profile.birthLocation}. Use these details when answering their questions.`;
+  return `${basePrompt}\n\nCurrent date and time: ${currentDateTimeIso}.\nUser birth details: born on ${dob} at ${profile.birthTime} in ${profile.birthLocation}. Use these details when answering their questions.`;
 }
