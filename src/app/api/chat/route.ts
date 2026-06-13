@@ -320,6 +320,23 @@ async function* streamAnthropicProvider(options: {
   }
 }
 
+function getGoogleThinkingConfig(model: string) {
+  const normalizedModel = model.toLowerCase();
+
+  if (normalizedModel.includes("gemini-2.5-flash")) {
+    return { thinkingBudget: 0 };
+  }
+
+  if (
+    normalizedModel.includes("gemini-3") &&
+    (normalizedModel.includes("flash") || normalizedModel.includes("lite"))
+  ) {
+    return { thinkingLevel: "minimal" };
+  }
+
+  return undefined;
+}
+
 async function* streamGoogleProvider(options: {
   apiKey: string;
   model: string;
@@ -327,6 +344,8 @@ async function* streamGoogleProvider(options: {
   messages: ChatMessage[];
   maxOutputTokens: number;
 }): AsyncGenerator<ProviderStreamChunk> {
+  const thinkingConfig = getGoogleThinkingConfig(options.model);
+
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(options.apiKey)}`,
     {
@@ -345,6 +364,7 @@ async function* streamGoogleProvider(options: {
         generationConfig: {
           temperature: 0.8,
           maxOutputTokens: options.maxOutputTokens,
+          ...(thinkingConfig ? { thinkingConfig } : {}),
         },
       }),
     },
