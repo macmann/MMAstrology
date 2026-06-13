@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminSubmitButton } from "./AdminSubmitButton";
 import { LogoutButton } from "@/components/LogoutButton";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -560,16 +561,21 @@ export default async function AdminDashboardPage() {
                         name="isActive"
                         value={provider.isActive ? "false" : "true"}
                       />
-                      <button
-                        type="submit"
+                      <AdminSubmitButton
                         className={`w-full rounded-full border px-4 py-2 text-center text-sm font-black transition sm:w-auto ${
                           provider.isActive
                             ? "border-rose-200/25 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
                             : "border-amber-200/25 bg-amber-200 text-[#160b2f] hover:bg-amber-100"
                         }`}
+                        pendingText={
+                          provider.isActive ? "Disabling..." : "Enabling..."
+                        }
+                        successText={`Provider ${
+                          provider.isActive ? "disabled" : "enabled"
+                        } successfully.`}
                       >
                         {provider.isActive ? "Disable" : "Enable"}
-                      </button>
+                      </AdminSubmitButton>
                     </form>
                     <Link
                       href={`/admin/dashboard/providers/${provider.id}`}
@@ -622,12 +628,13 @@ export default async function AdminDashboardPage() {
               </span>
             </label>
             <div className="flex justify-end">
-              <button
-                type="submit"
+              <AdminSubmitButton
                 className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+                pendingText="Saving setting..."
+                successText="Chat context setting saved successfully."
               >
                 Save chat context setting
-              </button>
+              </AdminSubmitButton>
             </div>
           </form>
         </section>
@@ -662,12 +669,13 @@ export default async function AdminDashboardPage() {
               />
             </label>
             <div className="flex justify-end">
-              <button
-                type="submit"
+              <AdminSubmitButton
                 className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+                pendingText="Saving prompt..."
+                successText="Daily prompt saved successfully."
               >
                 Save daily prompt
-              </button>
+              </AdminSubmitButton>
             </div>
           </form>
         </section>
@@ -802,12 +810,13 @@ export default async function AdminDashboardPage() {
                           placeholder="Reason / note"
                           className="mt-2 w-full rounded-xl border border-white/10 bg-[#100a29] px-3 py-2 text-sm text-white outline-none placeholder:text-violet-100/35 focus:border-amber-200/70"
                         />
-                        <button
-                          type="submit"
+                        <AdminSubmitButton
                           className="mt-2 w-full rounded-full bg-amber-200 px-4 py-2 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+                          pendingText="Applying..."
+                          successText="Credit change applied successfully."
                         >
                           Apply credit change
-                        </button>
+                        </AdminSubmitButton>
                       </form>
 
                       <form
@@ -822,13 +831,14 @@ export default async function AdminDashboardPage() {
                         {user.isBanned ? (
                           <>
                             <input type="hidden" name="intent" value="unban" />
-                            <button
-                              type="submit"
+                            <AdminSubmitButton
                               disabled={isSelf}
-                              className="w-full rounded-full border border-emerald-200/30 bg-emerald-300/15 px-4 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-300/25 disabled:cursor-not-allowed disabled:opacity-45"
+                              className="w-full rounded-full border border-emerald-200/30 bg-emerald-300/15 px-4 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-300/25"
+                              pendingText="Unbanning..."
+                              successText="User unbanned successfully."
                             >
                               Unban user
-                            </button>
+                            </AdminSubmitButton>
                           </>
                         ) : (
                           <>
@@ -838,13 +848,14 @@ export default async function AdminDashboardPage() {
                               placeholder="Ban reason"
                               className="w-full rounded-xl border border-white/10 bg-[#100a29] px-3 py-2 text-sm text-white outline-none placeholder:text-violet-100/35 focus:border-rose-200/70"
                             />
-                            <button
-                              type="submit"
+                            <AdminSubmitButton
                               disabled={isSelf}
-                              className="mt-2 w-full rounded-full border border-rose-200/30 bg-rose-400/15 px-4 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-400/25 disabled:cursor-not-allowed disabled:opacity-45"
+                              className="mt-2 w-full rounded-full border border-rose-200/30 bg-rose-400/15 px-4 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-400/25"
+                              pendingText="Banning..."
+                              successText="User banned successfully."
                             >
                               Ban user
-                            </button>
+                            </AdminSubmitButton>
                           </>
                         )}
                       </form>
@@ -858,13 +869,14 @@ export default async function AdminDashboardPage() {
                           name="targetUserId"
                           value={user.id}
                         />
-                        <button
-                          type="submit"
+                        <AdminSubmitButton
                           disabled={isSelf}
-                          className="w-full rounded-full border border-rose-200/30 px-4 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-400/20 disabled:cursor-not-allowed disabled:opacity-45"
+                          className="w-full rounded-full border border-rose-200/30 px-4 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-400/20"
+                          pendingText="Removing..."
+                          successText="User removed successfully."
                         >
                           Remove user permanently
-                        </button>
+                        </AdminSubmitButton>
                         <p className="mt-2 text-xs leading-5 text-rose-100/70">
                           Deletes profile, messages, and credit history through
                           cascading relations.

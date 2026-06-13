@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminSubmitButton } from "../../AdminSubmitButton";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
@@ -243,12 +244,13 @@ export default async function ProviderDetailsPage({
               >
                 Cancel
               </Link>
-              <button
-                type="submit"
+              <AdminSubmitButton
                 className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+                pendingText="Saving provider..."
+                successText="Provider saved successfully."
               >
                 Save provider
-              </button>
+              </AdminSubmitButton>
             </div>
           </div>
         </form>
