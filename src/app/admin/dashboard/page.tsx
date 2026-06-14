@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import Link from "next/link";
 import { AdminSubmitButton } from "./AdminSubmitButton";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -25,6 +26,8 @@ type ProviderSummary = {
   maxOutputTokens: number;
   updatedAt: Date;
 };
+
+const MIN_PASSWORD_LENGTH = 8;
 
 type UserSummary = {
   id: string;
@@ -169,6 +172,32 @@ export default async function AdminDashboardPage() {
         },
       });
     }
+
+    revalidatePath("/admin/dashboard");
+  }
+
+
+  async function resetUserPassword(formData: FormData) {
+    "use server";
+
+    const adminSession = await requireAdmin();
+    const targetUserId = String(formData.get("targetUserId") ?? "").trim();
+    const newPassword = String(formData.get("newPassword") ?? "");
+
+    if (
+      !targetUserId ||
+      targetUserId === adminSession.userId ||
+      newPassword.length < MIN_PASSWORD_LENGTH
+    ) {
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: targetUserId },
+      data: { passwordHash },
+    });
 
     revalidatePath("/admin/dashboard");
   }
@@ -441,7 +470,7 @@ export default async function AdminDashboardPage() {
               Users & credits
             </h2>
             <p className="mt-2 text-sm leading-6 text-violet-100/70">
-              Add credits, remove credits, ban, unban, or delete users.
+              Add credits, remove credits, reset passwords, ban, unban, or delete users.
             </p>
           </a>
           <Link
@@ -689,7 +718,7 @@ export default async function AdminDashboardPage() {
               User management
             </p>
             <h2 className="mt-2 text-2xl font-bold text-white">
-              Users, credits, bans, and removal
+              Users, credits, passwords, bans, and removal
             </h2>
             <p className="mt-2 text-sm leading-6 text-violet-100/70">
               Showing the 50 newest users. Credit removals are capped at the
@@ -817,6 +846,42 @@ export default async function AdminDashboardPage() {
                         >
                           Apply credit change
                         </AdminSubmitButton>
+                      </form>
+
+                      <form
+                        action={resetUserPassword}
+                        className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+                      >
+                        <input
+                          type="hidden"
+                          name="targetUserId"
+                          value={user.id}
+                        />
+                        <label className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                          Reset password
+                          <input
+                            name="newPassword"
+                            type="password"
+                            autoComplete="new-password"
+                            minLength={MIN_PASSWORD_LENGTH}
+                            required
+                            placeholder={`Minimum ${MIN_PASSWORD_LENGTH} characters`}
+                            disabled={isSelf}
+                            className="mt-2 w-full rounded-xl border border-white/10 bg-[#100a29] px-3 py-2 text-sm font-bold text-white outline-none placeholder:text-violet-100/35 focus:border-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60"
+                          />
+                        </label>
+                        <AdminSubmitButton
+                          disabled={isSelf}
+                          className="mt-2 w-full rounded-full border border-amber-200/25 bg-amber-200/15 px-4 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-200 hover:text-[#160b2f] disabled:cursor-not-allowed disabled:opacity-60"
+                          pendingText="Resetting..."
+                          successText="Password reset successfully."
+                        >
+                          Reset user password
+                        </AdminSubmitButton>
+                        <p className="mt-2 text-xs leading-5 text-violet-100/60">
+                          Enter a new temporary password and share it securely
+                          with the user.
+                        </p>
                       </form>
 
                       <form
