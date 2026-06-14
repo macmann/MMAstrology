@@ -20,8 +20,8 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <main className="cosmic-page">
-      <div className="cosmic-shell">
+    <main className="cosmic-page cosmic-scroll-page">
+      <div className="cosmic-shell cosmic-scroll-shell">
         <section className="cosmic-header px-6 pb-10 pt-8 text-white">
           <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-[1.75rem] border border-amber-200/20 bg-white/10 text-3xl shadow-inner shadow-white/10">
             ✦

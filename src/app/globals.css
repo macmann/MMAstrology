@@ -45,6 +45,7 @@ input {
 
   .cosmic-scroll-page {
     @apply h-auto min-h-dvh overflow-x-hidden overflow-y-auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .cosmic-shell {
@@ -53,6 +54,10 @@ input {
       radial-gradient(circle at 15% 0%, rgba(250, 204, 21, 0.16), transparent 14rem),
       radial-gradient(circle at 92% 7%, rgba(168, 85, 247, 0.28), transparent 16rem),
       linear-gradient(180deg, #160d36 0%, #100a29 42%, #0d1028 100%);
+  }
+
+  .cosmic-scroll-shell {
+    @apply h-auto min-h-dvh overflow-visible sm:min-h-[calc(100dvh-3rem)];
   }
 
   .cosmic-header {
