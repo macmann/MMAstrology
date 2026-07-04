@@ -54,7 +54,11 @@ function formatLedgerDate(value: string) {
   }).format(new Date(value));
 }
 
-export function ProfileSettingsClient() {
+type ProfileSettingsClientProps = {
+  isAdsEnabled: boolean;
+};
+
+export function ProfileSettingsClient({ isAdsEnabled }: Readonly<ProfileSettingsClientProps>) {
   const { language, setLanguage, t } = useLocalization();
   const [activeTab, setActiveTab] = useState<ProfileTab>("account");
   const [profileData, setProfileData] = useState<ProfilePayload | null>(null);
@@ -427,7 +431,7 @@ export function ProfileSettingsClient() {
           </div>
         )}
 
-        <AdBanner className="mb-3" />
+        <AdBanner className="mb-3" isAdsEnabled={isAdsEnabled} />
       </div>
     </div>
   );

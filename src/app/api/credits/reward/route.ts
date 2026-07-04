@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { getAdsEnabled } from "@/lib/ad-settings";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -83,6 +84,12 @@ export async function POST() {
 
   if (!session) {
     return NextResponse.json({ error: "You must be logged in to claim rewarded ad credits." }, { status: 401 });
+  }
+
+  const isAdsEnabled = await getAdsEnabled();
+
+  if (!isAdsEnabled) {
+    return NextResponse.json({ error: "Rewarded ads are currently disabled." }, { status: 403 });
   }
 
   const windowStart = new Date(Date.now() - REWARDED_AD_WINDOW_MS);

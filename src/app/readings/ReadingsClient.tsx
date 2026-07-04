@@ -163,10 +163,11 @@ function buildDailyAspectCards(reading: string) {
 type ReadingView = "life" | "daily";
 
 type ReadingsClientProps = {
+  isAdsEnabled: boolean;
   view?: ReadingView;
 };
 
-export function ReadingsClient({ view = "life" }: Readonly<ReadingsClientProps>) {
+export function ReadingsClient({ isAdsEnabled, view = "life" }: Readonly<ReadingsClientProps>) {
   const { language, t } = useLocalization();
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [error, setError] = useState("");
@@ -375,7 +376,7 @@ export function ReadingsClient({ view = "life" }: Readonly<ReadingsClientProps>)
           </>
         ) : null}
 
-        <AdBanner className="mb-3" />
+        <AdBanner className="mb-3" isAdsEnabled={isAdsEnabled} />
       </main>
     </>
   );

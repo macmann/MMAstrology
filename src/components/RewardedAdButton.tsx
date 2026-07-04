@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 type RewardedAdButtonProps = {
   dailyFreeCredits: number;
+  isAdsEnabled?: boolean;
 };
 
 type RewardResponse = {
@@ -16,7 +17,7 @@ type RewardResponse = {
 
 const COUNTDOWN_SECONDS = 15;
 
-export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButtonProps>) {
+export function RewardedAdButton({ dailyFreeCredits, isAdsEnabled = true }: Readonly<RewardedAdButtonProps>) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
@@ -101,7 +102,7 @@ export function RewardedAdButton({ dailyFreeCredits }: Readonly<RewardedAdButton
     };
   }, [countdown, isOpen, router]);
 
-  if (dailyFreeCredits > 0) {
+  if (!isAdsEnabled || dailyFreeCredits > 0) {
     return null;
   }
 
