@@ -89,7 +89,7 @@ export function BottomNavigation() {
   const { t } = useLocalization();
 
   return (
-    <nav className="z-30 shrink-0 border-t border-white/10 bg-[#170d39]/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-18px_40px_rgba(30,13,72,0.42)] backdrop-blur-xl" aria-label="Primary">
+    <nav className="sticky bottom-0 z-30 shrink-0 border-t border-white/10 bg-[#170d39]/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-18px_40px_rgba(30,13,72,0.42)] backdrop-blur-xl" aria-label="Primary">
       <div className="grid grid-cols-5 text-center text-[0.56rem] font-black">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
