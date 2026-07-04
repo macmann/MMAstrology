@@ -18,5 +18,6 @@ export async function GET() {
   return NextResponse.json({
     freeCredits: credits.dailyFreeCredits,
     purchasedCredits: credits.purchasedCredits,
+    dailyFreeCreditAllowance: credits.dailyFreeCreditAllowance,
   });
 }

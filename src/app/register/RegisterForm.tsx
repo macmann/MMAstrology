@@ -39,7 +39,7 @@ export function RegisterForm() {
     <form onSubmit={handleSubmit} className="cosmic-form">
       <div>
         <h1 className="text-3xl font-black tracking-tight text-white">Create your account</h1>
-        <p className="mt-2 text-sm leading-6 text-violet-100/70">Start with 4 daily free credits and a secure astrology profile.</p>
+        <p className="mt-2 text-sm leading-6 text-violet-100/70">Start with daily free credits and a secure astrology profile.</p>
       </div>
 
       {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</p> : null}

@@ -10,6 +10,8 @@ const DEFAULT_ADMIN = {
 };
 
 const CHAT_HISTORY_CONTEXT_PROMPT_KEY = "chat-history-context-enabled";
+const DAILY_FREE_CREDIT_ALLOWANCE_KEY = "daily-free-credit-allowance";
+const DEFAULT_DAILY_FREE_CREDIT_ALLOWANCE = 4;
 
 const DEFAULT_DAILY_READING_PROMPT = [
   "Create the user's daily astrology reading from their saved birth profile and today's date.",
@@ -112,6 +114,15 @@ async function main() {
     where: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY },
     update: {},
     create: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY, prompt: "true" },
+  });
+
+  await prisma.promptConfig.upsert({
+    where: { key: DAILY_FREE_CREDIT_ALLOWANCE_KEY },
+    update: {},
+    create: {
+      key: DAILY_FREE_CREDIT_ALLOWANCE_KEY,
+      prompt: String(DEFAULT_DAILY_FREE_CREDIT_ALLOWANCE),
+    },
   });
 }
 
