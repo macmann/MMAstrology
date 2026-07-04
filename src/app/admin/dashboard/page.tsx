@@ -21,7 +21,7 @@ import {
   serializeAdsEnabledSetting,
 } from "@/lib/ad-settings";
 import { prisma } from "@/lib/prisma";
-import { AI_PROVIDER_OPTIONS, getAiProviderOption, isAiProviderType } from "@/lib/ai-providers";
+import { AI_PROVIDER_OPTIONS, getAiProviderOption, isAiProviderType, normalizeAiModel } from "@/lib/ai-providers";
 import {
   CHAT_HISTORY_CONTEXT_PROMPT_KEY,
   parseChatHistoryContextSetting,
@@ -206,11 +206,7 @@ export default async function AdminDashboardPage() {
       return;
     }
 
-    const modelOptions = getAiProviderOption(aiProviderRaw).models;
-    const requestedModel = String(formData.get("aiModel") ?? "").trim();
-    const aiModel = modelOptions.some((model) => model === requestedModel)
-      ? requestedModel
-      : getAiProviderOption(aiProviderRaw).defaultModel;
+    const aiModel = normalizeAiModel(formData.get("aiModel"), aiProviderRaw);
 
     await prisma.providerConfig.create({
       data: {
@@ -710,11 +706,23 @@ export default async function AdminDashboardPage() {
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
-            <select name="aiModel" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm font-bold text-white outline-none">
-              {AI_PROVIDER_OPTIONS.flatMap((option) => option.models.map((model) => (
-                <option key={`${option.value}-${model}`} value={model}>{option.label}: {model}</option>
-              )))}
-            </select>
+            <input
+              name="aiModel"
+              required
+              maxLength={120}
+              list="create-provider-model-suggestions"
+              placeholder="Enter model name, e.g. gpt-5.5 or gpt-5.4-mini"
+              className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm font-bold text-white outline-none"
+            />
+            <datalist id="create-provider-model-suggestions">
+              {AI_PROVIDER_OPTIONS.flatMap((option) =>
+                option.suggestedModels.map((model) => (
+                  <option key={`${option.value}-${model}`} value={model}>
+                    {option.label}: {model}
+                  </option>
+                )),
+              )}
+            </datalist>
             <textarea name="description" maxLength={280} placeholder="Public description" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm text-white outline-none lg:col-span-2" />
             <textarea name="systemPrompt" placeholder="System prompt" className="min-h-36 rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm text-white outline-none lg:col-span-2" />
             <label className="flex items-center gap-2 text-sm font-bold text-violet-100"><input name="isActive" type="checkbox" defaultChecked className="accent-amber-200" /> Active</label>

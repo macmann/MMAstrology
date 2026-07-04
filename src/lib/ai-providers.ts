@@ -6,14 +6,14 @@ export const AI_PROVIDER_OPTIONS = [
     label: "OpenAI",
     envKey: "OPENAI_API_KEY",
     defaultModel: "gpt-4o-mini",
-    models: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"],
+    suggestedModels: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"],
   },
   {
     value: "ANTHROPIC",
     label: "Anthropic",
     envKey: "ANTHROPIC_API_KEY",
     defaultModel: "claude-3-5-haiku-latest",
-    models: [
+    suggestedModels: [
       "claude-3-5-haiku-latest",
       "claude-3-5-sonnet-latest",
       "claude-3-7-sonnet-latest",
@@ -24,21 +24,21 @@ export const AI_PROVIDER_OPTIONS = [
     label: "Google Gemini",
     envKey: "GOOGLE_GENAI_API_KEY",
     defaultModel: "gemini-1.5-flash",
-    models: ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash"],
+    suggestedModels: ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.5-flash"],
   },
   {
     value: "XAI",
     label: "xAI",
     envKey: "XAI_API_KEY",
     defaultModel: "grok-2-latest",
-    models: ["grok-2-latest", "grok-2-vision-latest", "grok-3-mini", "grok-3"],
+    suggestedModels: ["grok-2-latest", "grok-2-vision-latest", "grok-3-mini", "grok-3"],
   },
 ] as const satisfies readonly {
   value: AiProviderType;
   label: string;
   envKey: string;
   defaultModel: string;
-  models: readonly string[];
+  suggestedModels: readonly string[];
 }[];
 
 export function getAiProviderOption(value: AiProviderType) {
@@ -49,6 +49,16 @@ export function isAiProviderType(value: string): value is AiProviderType {
   return AI_PROVIDER_OPTIONS.some((option) => option.value === value);
 }
 
-export function getModelOptions(value: AiProviderType) {
-  return getAiProviderOption(value).models;
+export function getSuggestedModelOptions(value: AiProviderType) {
+  return getAiProviderOption(value).suggestedModels;
+}
+
+export function normalizeAiModel(value: FormDataEntryValue | null, provider: AiProviderType) {
+  const model = String(value ?? "").trim();
+
+  if (!model || model.length > 120) {
+    return getAiProviderOption(provider).defaultModel;
+  }
+
+  return model;
 }
