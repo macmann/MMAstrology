@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AI_PROVIDER_OPTIONS, getAiProviderOption, isAiProviderType } from "@/lib/ai-providers";
+import { AI_PROVIDER_OPTIONS, isAiProviderType, normalizeAiModel } from "@/lib/ai-providers";
 
 const DEFAULT_MAX_OUTPUT_TOKENS = 400;
 const MIN_MAX_OUTPUT_TOKENS = 1;
@@ -89,11 +89,7 @@ export default async function ProviderDetailsPage({
       return;
     }
 
-    const modelOptions = getAiProviderOption(aiProviderRaw).models;
-    const requestedModel = String(formData.get("aiModel") ?? "").trim();
-    const aiModel = modelOptions.some((model) => model === requestedModel)
-      ? requestedModel
-      : getAiProviderOption(aiProviderRaw).defaultModel;
+    const aiModel = normalizeAiModel(formData.get("aiModel"), aiProviderRaw);
 
     if (
       !displayName ||
@@ -239,11 +235,24 @@ export default async function ProviderDetailsPage({
               </label>
               <label className="block text-sm font-bold text-slate-300">
                 AI model
-                <select name="aiModel" defaultValue={providerConfig.aiModel} className="mt-3 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-3 text-base font-bold text-white outline-none transition focus:border-amber-200/70">
-                  {AI_PROVIDER_OPTIONS.flatMap((option) => option.models.map((model) => (
-                    <option key={`${option.value}-${model}`} value={model}>{option.label}: {model}</option>
-                  )))}
-                </select>
+                <input
+                  name="aiModel"
+                  required
+                  maxLength={120}
+                  list="provider-model-suggestions"
+                  defaultValue={providerConfig.aiModel}
+                  className="mt-3 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-3 text-base font-bold text-white outline-none transition placeholder:text-violet-100/35 focus:border-amber-200/70 focus:ring-4 focus:ring-amber-200/10"
+                  placeholder="Enter model name, e.g. gpt-5.5 or gpt-5.4-mini"
+                />
+                <datalist id="provider-model-suggestions">
+                  {AI_PROVIDER_OPTIONS.flatMap((option) =>
+                    option.suggestedModels.map((model) => (
+                      <option key={`${option.value}-${model}`} value={model}>
+                        {option.label}: {model}
+                      </option>
+                    )),
+                  )}
+                </datalist>
               </label>
             </div>
 
