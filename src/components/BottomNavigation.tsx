@@ -89,8 +89,8 @@ export function BottomNavigation() {
   const { t } = useLocalization();
 
   return (
-    <nav className="z-30 -mx-5 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-2" aria-label="Primary">
-      <div className="grid grid-cols-5 rounded-[2.25rem] border border-white/15 bg-[#170d39]/95 p-2 text-center text-[0.56rem] font-black shadow-2xl shadow-fuchsia-950/40 backdrop-blur-xl">
+    <nav className="z-30 shrink-0 border-t border-white/10 bg-[#170d39]/95 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-18px_40px_rgba(30,13,72,0.42)] backdrop-blur-xl" aria-label="Primary">
+      <div className="grid grid-cols-5 text-center text-[0.56rem] font-black">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -99,7 +99,7 @@ export function BottomNavigation() {
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`group flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-[1.65rem] px-1 py-2 transition active:scale-[0.98] ${
+              className={`group flex min-h-[3.75rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 transition active:scale-[0.98] ${
                 isActive
                   ? "bg-amber-200/15 text-amber-100 shadow-inner shadow-amber-100/10"
                   : "text-violet-100/55 hover:bg-white/[0.06] hover:text-violet-50"
