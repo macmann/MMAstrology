@@ -43,6 +43,11 @@ input {
     @apply h-dvh overflow-hidden bg-[#07051a] text-slate-50 sm:py-6;
   }
 
+  .cosmic-home-page {
+    @apply h-auto min-h-dvh overflow-x-hidden overflow-y-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .cosmic-scroll-page {
     @apply h-auto min-h-dvh overflow-x-hidden overflow-y-auto;
     -webkit-overflow-scrolling: touch;
@@ -56,6 +61,10 @@ input {
       linear-gradient(180deg, #160d36 0%, #100a29 42%, #0d1028 100%);
   }
 
+  .cosmic-home-shell {
+    @apply h-auto min-h-dvh overflow-visible sm:h-[calc(100dvh-3rem)] sm:min-h-0 sm:overflow-hidden;
+  }
+
   .cosmic-scroll-shell {
     @apply h-auto min-h-dvh overflow-visible sm:min-h-[calc(100dvh-3rem)];
   }
@@ -66,6 +75,10 @@ input {
       radial-gradient(circle at 78% 8%, rgba(250, 204, 21, 0.28), transparent 9rem),
       radial-gradient(circle at 10% 10%, rgba(217, 70, 239, 0.24), transparent 10rem),
       linear-gradient(135deg, #2a145c 0%, #180b3f 48%, #081c3a 100%);
+  }
+
+  .cosmic-home-header {
+    @apply px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7;
   }
 
   .cosmic-header::before {
