@@ -8,13 +8,11 @@ type AppShellProps = Readonly<{
 export function AppShell({ children }: AppShellProps) {
   return (
     <main className="cosmic-page">
-      <div className="cosmic-shell flex flex-col">
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            {children}
-          </div>
-          <BottomNavigation />
+      <div className="cosmic-shell grid grid-rows-[minmax(0,1fr)_auto]">
+        <div className="relative min-h-0 overflow-y-auto overscroll-contain">
+          {children}
         </div>
+        <BottomNavigation />
       </div>
     </main>
   );
