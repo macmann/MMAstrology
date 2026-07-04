@@ -17,6 +17,13 @@ enum MessageRole {
   assistant
 }
 
+enum AiProviderType {
+  OPENAI
+  ANTHROPIC
+  GOOGLE
+  XAI
+}
+
 model User {
   id                  String               @id @default(cuid())
   email               String               @unique
@@ -26,6 +33,7 @@ model User {
   dailyFreeCredits    Int                  @default(4)
   purchasedCredits    Int                  @default(0)
   isBanned            Boolean              @default(false)
+  isPro               Boolean              @default(false)
   bannedAt            DateTime?
   banReason           String?              @db.Text
   lastCreditReset     DateTime             @default(now())
@@ -105,8 +113,11 @@ model ProviderConfig {
   name            String   @unique
   displayName     String   @default("")
   description     String   @default("") @db.Text
-  isActive        Boolean  @default(true)
-  systemPrompt    String   @default("") @db.Text
+  isActive        Boolean        @default(true)
+  isProProvider   Boolean        @default(false)
+  aiProvider      AiProviderType @default(OPENAI)
+  aiModel         String         @default("gpt-4o-mini")
+  systemPrompt    String         @default("") @db.Text
   maxOutputTokens Int      @default(400)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

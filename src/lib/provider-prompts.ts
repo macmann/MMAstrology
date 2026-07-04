@@ -1,12 +1,11 @@
-import type { AstrologerName } from "@/lib/astrologers";
-
 export type ProviderPromptConfig = {
-  personaName: AstrologerName;
-  tone: string;
+  personaName: string;
+  tone?: string;
 };
 
 export function buildDefaultProviderPrompt(config: ProviderPromptConfig) {
-  return `You are ${config.personaName}, an expert astrologer. Tone: ${config.tone}. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.`;
+  const tone = config.tone ? ` Tone: ${config.tone}.` : "";
+  return `You are ${config.personaName}, an expert astrologer.${tone} Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.`;
 }
 
 export function buildSystemPrompt(
