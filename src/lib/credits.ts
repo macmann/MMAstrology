@@ -1,6 +1,5 @@
+import { getDailyFreeCreditAllowance } from "@/lib/credit-settings";
 import { prisma } from "@/lib/prisma";
-
-const DAILY_FREE_CREDIT_ALLOWANCE = 4;
 
 export function getUtcStartOfToday(now = new Date()) {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -8,6 +7,7 @@ export function getUtcStartOfToday(now = new Date()) {
 
 export async function checkAndResetCredits(userId: string, now = new Date()) {
   const todayUtc = getUtcStartOfToday(now);
+  const dailyFreeCreditAllowance = await getDailyFreeCreditAllowance();
 
   await prisma.user.updateMany({
     where: {
@@ -17,12 +17,12 @@ export async function checkAndResetCredits(userId: string, now = new Date()) {
       },
     },
     data: {
-      dailyFreeCredits: DAILY_FREE_CREDIT_ALLOWANCE,
+      dailyFreeCredits: dailyFreeCreditAllowance,
       lastCreditReset: todayUtc,
     },
   });
 
-  return prisma.user.findUnique({
+  const credits = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -31,4 +31,6 @@ export async function checkAndResetCredits(userId: string, now = new Date()) {
       lastCreditReset: true,
     },
   });
+
+  return credits ? { ...credits, dailyFreeCreditAllowance } : null;
 }

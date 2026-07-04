@@ -31,6 +31,7 @@ type ProfilePayload = {
     dailyFreeCredits: number;
     purchasedCredits: number;
     lastCreditReset: string;
+    dailyFreeCreditAllowance: number;
     createdAt: string;
     updatedAt: string;
     astrologicalProfile: AstrologicalProfile | null;
@@ -38,7 +39,6 @@ type ProfilePayload = {
   };
 };
 
-const FREE_CREDIT_ALLOWANCE = 4;
 
 function toDateInputValue(value?: string) {
   return value ? value.slice(0, 10) : "";
@@ -375,7 +375,7 @@ export function ProfileSettingsClient() {
                 </div>
                 <div className="rounded-[1.4rem] border border-amber-200/20 bg-amber-100/10 p-3 text-center text-white">
                   <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-amber-200">{t("profile.daily")}</p>
-                  <p className="mt-1 text-lg font-black">{isLoading ? "—" : `${user?.dailyFreeCredits ?? 0}/${FREE_CREDIT_ALLOWANCE}`}</p>
+                  <p className="mt-1 text-lg font-black">{isLoading ? "—" : `${user?.dailyFreeCredits ?? 0}/${user?.dailyFreeCreditAllowance ?? 0}`}</p>
                 </div>
               </div>
               <div className="relative mt-5 grid grid-cols-2 gap-3 text-sm font-bold">

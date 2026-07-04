@@ -41,7 +41,7 @@ const translations = {
     "home.insightEyebrow": "Today's insight",
     "home.insightTitle": "Venus amplifies relational clarity.",
     "home.insightBody": "Ask how current transits intersect with your natal placements and receive account-aware guidance.",
-    "home.freeCredits": "✦ 4 daily free credits reset automatically.",
+    "home.freeCredits": "✦ Daily free credits reset automatically.",
     "home.purchasedCredits": "☽ Purchased credits stay tied to your account.",
     "home.historyMetadata": "✧ Conversation history follows provider and role metadata.",
     "login.title": "Log in",

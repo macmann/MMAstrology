@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { getDailyFreeCreditAllowance } from "@/lib/credit-settings";
 import { prisma } from "@/lib/prisma";
 import { AUTH_COOKIE_NAME, getAuthCookieOptions, signSessionToken } from "@/lib/auth";
 
@@ -29,10 +30,12 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const dailyFreeCreditAllowance = await getDailyFreeCreditAllowance();
   const user = await prisma.user.create({
     data: {
       email,
       passwordHash,
+      dailyFreeCredits: dailyFreeCreditAllowance,
     },
     select: {
       id: true,

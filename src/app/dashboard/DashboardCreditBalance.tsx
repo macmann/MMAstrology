@@ -5,19 +5,25 @@ import { useEffect, useState } from "react";
 type CreditBalance = {
   freeCredits: number;
   purchasedCredits: number;
+  dailyFreeCreditAllowance: number;
 };
 
 type DashboardCreditBalanceProps = {
   initialFreeCredits: number;
   initialPurchasedCredits: number;
+  dailyFreeCreditAllowance: number;
 };
 
-const FREE_CREDIT_ALLOWANCE = 4;
 
-export function DashboardCreditBalance({ initialFreeCredits, initialPurchasedCredits }: DashboardCreditBalanceProps) {
+export function DashboardCreditBalance({
+  initialFreeCredits,
+  initialPurchasedCredits,
+  dailyFreeCreditAllowance,
+}: DashboardCreditBalanceProps) {
   const [credits, setCredits] = useState<CreditBalance>({
     freeCredits: initialFreeCredits,
     purchasedCredits: initialPurchasedCredits,
+    dailyFreeCreditAllowance,
   });
   const [isRefreshing, setIsRefreshing] = useState(true);
 
@@ -37,10 +43,13 @@ export function DashboardCreditBalance({ initialFreeCredits, initialPurchasedCre
 
         const data = (await response.json()) as Partial<CreditBalance>;
 
-        if (isMounted && typeof data.freeCredits === "number" && typeof data.purchasedCredits === "number") {
+        if (isMounted && typeof data.freeCredits === "number" &&
+          typeof data.purchasedCredits === "number" &&
+          typeof data.dailyFreeCreditAllowance === "number") {
           setCredits({
             freeCredits: data.freeCredits,
             purchasedCredits: data.purchasedCredits,
+            dailyFreeCreditAllowance: data.dailyFreeCreditAllowance,
           });
         }
       } finally {
@@ -73,7 +82,7 @@ export function DashboardCreditBalance({ initialFreeCredits, initialPurchasedCre
         <div className="rounded-[1.4rem] border border-amber-200/20 bg-amber-100/10 p-3 text-center text-white">
           <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-amber-200">Daily</p>
           <p className="mt-1 text-lg font-black">
-            {credits.freeCredits}/{FREE_CREDIT_ALLOWANCE}
+            {credits.freeCredits}/{credits.dailyFreeCreditAllowance}
           </p>
         </div>
       </div>

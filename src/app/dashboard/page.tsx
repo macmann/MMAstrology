@@ -55,6 +55,7 @@ export default async function DashboardPage() {
       profileInitials={profileInitials}
       initialFreeCredits={credits.dailyFreeCredits}
       initialPurchasedCredits={credits.purchasedCredits}
+      dailyFreeCreditAllowance={credits.dailyFreeCreditAllowance}
     />
   );
 }

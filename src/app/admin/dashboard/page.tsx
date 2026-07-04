@@ -9,6 +9,12 @@ import {
   DEFAULT_DAILY_READING_PROMPT,
   DAILY_READING_PROMPT_KEY,
 } from "@/lib/life-reading";
+import {
+  DAILY_FREE_CREDIT_ALLOWANCE_KEY,
+  DEFAULT_DAILY_FREE_CREDIT_ALLOWANCE,
+  parseDailyFreeCreditAllowance,
+  serializeDailyFreeCreditAllowance,
+} from "@/lib/credit-settings";
 import { prisma } from "@/lib/prisma";
 import {
   CHAT_HISTORY_CONTEXT_PROMPT_KEY,
@@ -262,6 +268,32 @@ export default async function AdminDashboardPage() {
     revalidatePath("/admin/dashboard");
   }
 
+
+  async function updateDailyFreeCreditAllowance(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+
+    const allowance = Number(String(formData.get("dailyFreeCreditAllowance") ?? "").trim());
+
+    if (!Number.isSafeInteger(allowance) || allowance < 0) {
+      return;
+    }
+
+    await prisma.promptConfig.upsert({
+      where: { key: DAILY_FREE_CREDIT_ALLOWANCE_KEY },
+      update: { prompt: serializeDailyFreeCreditAllowance(allowance) },
+      create: {
+        key: DAILY_FREE_CREDIT_ALLOWANCE_KEY,
+        prompt: serializeDailyFreeCreditAllowance(allowance),
+      },
+    });
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/dashboard");
+    revalidatePath("/profile/settings");
+  }
+
   async function updateDailyReadingPrompt(formData: FormData) {
     "use server";
 
@@ -298,6 +330,7 @@ export default async function AdminDashboardPage() {
     providerConfigs,
     dailyPromptConfig,
     chatHistoryContextConfig,
+    dailyFreeCreditAllowanceConfig,
     users,
   ] = await Promise.all([
     prisma.user.count(),
@@ -327,6 +360,9 @@ export default async function AdminDashboardPage() {
     prisma.promptConfig.findUnique({
       where: { key: CHAT_HISTORY_CONTEXT_PROMPT_KEY },
     }),
+    prisma.promptConfig.findUnique({
+      where: { key: DAILY_FREE_CREDIT_ALLOWANCE_KEY },
+    }),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -352,6 +388,9 @@ export default async function AdminDashboardPage() {
   const providers = providerConfigs as ProviderSummary[];
   const dailyReadingPrompt =
     dailyPromptConfig?.prompt ?? DEFAULT_DAILY_READING_PROMPT;
+  const dailyFreeCreditAllowance = parseDailyFreeCreditAllowance(
+    dailyFreeCreditAllowanceConfig?.prompt,
+  );
   const managedUsers = users as UserSummary[];
   const isChatHistoryContextEnabled = parseChatHistoryContextSetting(
     chatHistoryContextConfig?.prompt,
@@ -617,6 +656,49 @@ export default async function AdminDashboardPage() {
               </div>
             ))}
           </div>
+        </section>
+
+
+        <section
+          id="daily-free-credits"
+          className="scroll-mt-8 rounded-[2rem] border border-emerald-200/20 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/20 backdrop-blur-xl"
+        >
+          <div className="mb-5">
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-emerald-200">
+              Credit settings
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-white">
+              Daily free message allowance
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Configure how many free chat messages users receive when their daily credits reset. New users also start with this allowance.
+            </p>
+          </div>
+
+          <form action={updateDailyFreeCreditAllowance} className="grid gap-4 sm:grid-cols-[minmax(0,16rem)_auto] sm:items-end">
+            <label className="block text-sm font-bold text-slate-300">
+              Daily free messages
+              <input
+                name="dailyFreeCreditAllowance"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={dailyFreeCreditAllowance}
+                placeholder={String(DEFAULT_DAILY_FREE_CREDIT_ALLOWANCE)}
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-[#100a29]/80 px-4 py-3 text-base font-semibold text-white outline-none transition placeholder:text-violet-100/35 focus:border-emerald-200"
+              />
+            </label>
+            <div className="flex justify-end sm:justify-start">
+              <AdminSubmitButton
+                className="rounded-full bg-emerald-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-emerald-100"
+                pendingText="Saving allowance..."
+                successText="Daily free allowance saved successfully."
+              >
+                Save allowance
+              </AdminSubmitButton>
+            </div>
+          </form>
         </section>
 
         <section

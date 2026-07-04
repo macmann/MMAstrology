@@ -55,7 +55,7 @@ export async function GET() {
     return NextResponse.json({ error: "You must be logged in to view your profile." }, { status: 401 });
   }
 
-  await checkAndResetCredits(session.userId);
+  const credits = await checkAndResetCredits(session.userId);
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
@@ -86,7 +86,7 @@ export async function GET() {
     return NextResponse.json({ error: "User was not found." }, { status: 404 });
   }
 
-  return NextResponse.json({ user });
+  return NextResponse.json({ user: { ...user, dailyFreeCreditAllowance: credits?.dailyFreeCreditAllowance ?? 0 } });
 }
 
 export async function PUT(request: Request) {

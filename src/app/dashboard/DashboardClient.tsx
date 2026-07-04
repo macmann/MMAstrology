@@ -12,6 +12,7 @@ type DashboardClientProps = {
   profileInitials: string;
   initialFreeCredits: number;
   initialPurchasedCredits: number;
+  dailyFreeCreditAllowance: number;
 };
 
 export function DashboardClient({
@@ -20,6 +21,7 @@ export function DashboardClient({
   profileInitials,
   initialFreeCredits,
   initialPurchasedCredits,
+  dailyFreeCreditAllowance,
 }: Readonly<DashboardClientProps>) {
   const { t } = useLocalization();
 
@@ -60,6 +62,7 @@ export function DashboardClient({
           key={`${initialFreeCredits}-${initialPurchasedCredits}`}
           initialFreeCredits={initialFreeCredits}
           initialPurchasedCredits={initialPurchasedCredits}
+          dailyFreeCreditAllowance={dailyFreeCreditAllowance}
         />
         <RewardedAdButton dailyFreeCredits={initialFreeCredits} />
       </section>
