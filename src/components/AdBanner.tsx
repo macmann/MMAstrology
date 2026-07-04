@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type AdBannerProps = {
   className?: string;
+  isAdsEnabled?: boolean;
   slot?: string;
 };
 
@@ -23,13 +24,13 @@ function normalizePublisherId(publisherId: string) {
   return trimmedPublisherId.startsWith("ca-pub-") ? trimmedPublisherId : `ca-pub-${trimmedPublisherId}`;
 }
 
-export function AdBanner({ className = "", slot = process.env.NEXT_PUBLIC_ADSENSE_SLOT }: Readonly<AdBannerProps>) {
+export function AdBanner({ className = "", isAdsEnabled = true, slot = process.env.NEXT_PUBLIC_ADSENSE_SLOT }: Readonly<AdBannerProps>) {
   const adClient = useMemo(() => normalizePublisherId(process.env.NEXT_PUBLIC_ADSENSE_PID ?? ""), []);
   const adElementRef = useRef<HTMLModElement | null>(null);
   const [isUnavailable, setIsUnavailable] = useState(!adClient);
 
   useEffect(() => {
-    if (!adClient) {
+    if (!isAdsEnabled || !adClient) {
       return;
     }
 
@@ -58,9 +59,9 @@ export function AdBanner({ className = "", slot = process.env.NEXT_PUBLIC_ADSENS
         window.clearTimeout(detectionTimer);
       }
     };
-  }, [adClient]);
+  }, [adClient, isAdsEnabled]);
 
-  if (!adClient) {
+  if (!isAdsEnabled || !adClient) {
     return null;
   }
 

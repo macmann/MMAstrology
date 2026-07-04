@@ -15,6 +15,11 @@ import {
   parseDailyFreeCreditAllowance,
   serializeDailyFreeCreditAllowance,
 } from "@/lib/credit-settings";
+import {
+  ADS_ENABLED_KEY,
+  parseAdsEnabledSetting,
+  serializeAdsEnabledSetting,
+} from "@/lib/ad-settings";
 import { prisma } from "@/lib/prisma";
 import {
   CHAT_HISTORY_CONTEXT_PROMPT_KEY,
@@ -268,6 +273,28 @@ export default async function AdminDashboardPage() {
     revalidatePath("/admin/dashboard");
   }
 
+  async function updateAdsEnabledSetting(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+
+    const enabled = formData.get("adsEnabled") === "on";
+
+    await prisma.promptConfig.upsert({
+      where: { key: ADS_ENABLED_KEY },
+      update: { prompt: serializeAdsEnabledSetting(enabled) },
+      create: {
+        key: ADS_ENABLED_KEY,
+        prompt: serializeAdsEnabledSetting(enabled),
+      },
+    });
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/dashboard");
+    revalidatePath("/readings");
+    revalidatePath("/profile/settings");
+    revalidatePath("/", "layout");
+  }
 
   async function updateDailyFreeCreditAllowance(formData: FormData) {
     "use server";
@@ -331,6 +358,7 @@ export default async function AdminDashboardPage() {
     dailyPromptConfig,
     chatHistoryContextConfig,
     dailyFreeCreditAllowanceConfig,
+    adsEnabledConfig,
     users,
   ] = await Promise.all([
     prisma.user.count(),
@@ -363,6 +391,9 @@ export default async function AdminDashboardPage() {
     prisma.promptConfig.findUnique({
       where: { key: DAILY_FREE_CREDIT_ALLOWANCE_KEY },
     }),
+    prisma.promptConfig.findUnique({
+      where: { key: ADS_ENABLED_KEY },
+    }),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -392,6 +423,7 @@ export default async function AdminDashboardPage() {
     dailyFreeCreditAllowanceConfig?.prompt,
   );
   const managedUsers = users as UserSummary[];
+  const isAdsEnabled = parseAdsEnabledSetting(adsEnabledConfig?.prompt);
   const isChatHistoryContextEnabled = parseChatHistoryContextSetting(
     chatHistoryContextConfig?.prompt,
   );
@@ -485,7 +517,7 @@ export default async function AdminDashboardPage() {
           </article>
         </section>
 
-        <section className="grid gap-5 lg:grid-cols-5">
+        <section className="grid gap-5 lg:grid-cols-2 xl:grid-cols-6">
           <a
             href="#providers"
             className="rounded-[2rem] border border-amber-200/20 bg-amber-200 px-6 py-5 text-[#160b2f] shadow-2xl shadow-violet-950/20 transition hover:bg-amber-100"
@@ -539,6 +571,19 @@ export default async function AdminDashboardPage() {
             </h2>
             <p className="mt-2 text-sm leading-6 text-violet-100/70">
               Toggle whether recent chat history is sent to the LLM.
+            </p>
+          </a>
+
+          <a
+            href="#ads"
+            className="rounded-[2rem] border border-white/15 bg-white/[0.08] px-6 py-5 shadow-2xl shadow-violet-950/20 backdrop-blur-xl transition hover:border-amber-200/35 hover:bg-white/[0.12]"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-200">
+              Monetize
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-white">Ads</h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Toggle ad banners, placeholders, and rewarded ad credits.
             </p>
           </a>
           <Link
@@ -658,6 +703,51 @@ export default async function AdminDashboardPage() {
           </div>
         </section>
 
+
+        <section
+          id="ads"
+          className="scroll-mt-8 rounded-[2rem] border border-amber-200/20 bg-white/[0.08] p-6 shadow-2xl shadow-violet-950/20 backdrop-blur-xl"
+        >
+          <div className="mb-5">
+            <p className="text-sm font-medium uppercase tracking-[0.25em] text-amber-200">
+              Ad settings
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-white">
+              App-wide advertising switch
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-violet-100/70">
+              Turn ads off to hide all ad banner placeholders, stop loading the AdSense script, and disable watch-to-earn rewarded ads.
+            </p>
+          </div>
+
+          <form action={updateAdsEnabledSetting} className="grid gap-4">
+            <label className="flex items-start gap-3 rounded-2xl border border-white/15 bg-[#100a29]/80 p-4">
+              <input
+                name="adsEnabled"
+                type="checkbox"
+                defaultChecked={isAdsEnabled}
+                className="mt-1 h-5 w-5 rounded border-white/20 bg-white/10 accent-amber-200"
+              />
+              <span>
+                <span className="block text-base font-black text-white">
+                  Enable advertising features
+                </span>
+                <span className="mt-1 block text-sm leading-6 text-violet-100/70">
+                  When enabled, banner ads and rewarded ad credit claims are available. When disabled, every ad surface is hidden from users.
+                </span>
+              </span>
+            </label>
+            <div className="flex justify-end">
+              <AdminSubmitButton
+                className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+                pendingText="Saving ad setting..."
+                successText="Ad setting saved successfully."
+              >
+                Save ad setting
+              </AdminSubmitButton>
+            </div>
+          </form>
+        </section>
 
         <section
           id="daily-free-credits"

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { astrologers, mergeAstrologerDisplayConfig } from "@/lib/astrologers";
 import { checkAndResetCredits } from "@/lib/credits";
+import { getAdsEnabled } from "@/lib/ad-settings";
 import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./DashboardClient";
 
@@ -12,7 +13,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [user, credits, activeProviderConfigs] = await Promise.all([
+  const [user, credits, activeProviderConfigs, isAdsEnabled] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId },
       select: {
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
       where: { isActive: true },
       select: { name: true, displayName: true, description: true },
     }),
+    getAdsEnabled(),
   ]);
 
   if (!user || !credits) {
@@ -56,6 +58,7 @@ export default async function DashboardPage() {
       initialFreeCredits={credits.dailyFreeCredits}
       initialPurchasedCredits={credits.purchasedCredits}
       dailyFreeCreditAllowance={credits.dailyFreeCreditAllowance}
+      isAdsEnabled={isAdsEnabled}
     />
   );
 }

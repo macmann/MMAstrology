@@ -13,6 +13,7 @@ type DashboardClientProps = {
   initialFreeCredits: number;
   initialPurchasedCredits: number;
   dailyFreeCreditAllowance: number;
+  isAdsEnabled: boolean;
 };
 
 export function DashboardClient({
@@ -22,6 +23,7 @@ export function DashboardClient({
   initialFreeCredits,
   initialPurchasedCredits,
   dailyFreeCreditAllowance,
+  isAdsEnabled,
 }: Readonly<DashboardClientProps>) {
   const { t } = useLocalization();
 
@@ -64,7 +66,7 @@ export function DashboardClient({
           initialPurchasedCredits={initialPurchasedCredits}
           dailyFreeCreditAllowance={dailyFreeCreditAllowance}
         />
-        <RewardedAdButton dailyFreeCredits={initialFreeCredits} />
+        <RewardedAdButton dailyFreeCredits={initialFreeCredits} isAdsEnabled={isAdsEnabled} />
       </section>
 
       <section className="px-5 pb-6 pt-4">

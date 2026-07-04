@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { getAdsEnabled } from "@/lib/ad-settings";
 import { LocalizationProvider } from "@/lib/localization";
 import "./globals.css";
 
@@ -33,15 +34,19 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const isAdsEnabled = await getAdsEnabled();
+
   return (
     <html lang="en">
       <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7653377097847850"
-          crossOrigin="anonymous"
-        />
+        {isAdsEnabled ? (
+          <script
+            async
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7653377097847850"
+            crossOrigin="anonymous"
+          />
+        ) : null}
       </head>
       <body>
         <LocalizationProvider>
