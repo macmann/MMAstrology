@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AI_PROVIDER_OPTIONS, getAiProviderOption, isAiProviderType } from "@/lib/ai-providers";
 
 const DEFAULT_MAX_OUTPUT_TOKENS = 400;
 const MIN_MAX_OUTPUT_TOKENS = 1;
@@ -53,6 +54,9 @@ export default async function ProviderDetailsPage({
       displayName: true,
       description: true,
       isActive: true,
+      isProProvider: true,
+      aiProvider: true,
+      aiModel: true,
       systemPrompt: true,
       maxOutputTokens: true,
       updatedAt: true,
@@ -78,6 +82,18 @@ export default async function ProviderDetailsPage({
       formData.get("maxOutputTokens"),
     );
     const isActive = formData.get("isActive") === "on";
+    const isProProvider = formData.get("isProProvider") === "on";
+    const aiProviderRaw = String(formData.get("aiProvider") ?? "").trim();
+
+    if (!isAiProviderType(aiProviderRaw)) {
+      return;
+    }
+
+    const modelOptions = getAiProviderOption(aiProviderRaw).models;
+    const requestedModel = String(formData.get("aiModel") ?? "").trim();
+    const aiModel = modelOptions.some((model) => model === requestedModel)
+      ? requestedModel
+      : getAiProviderOption(aiProviderRaw).defaultModel;
 
     if (
       !displayName ||
@@ -94,6 +110,9 @@ export default async function ProviderDetailsPage({
         displayName,
         description,
         isActive,
+        isProProvider,
+        aiProvider: aiProviderRaw,
+        aiModel,
         systemPrompt,
         maxOutputTokens,
       },
@@ -191,6 +210,42 @@ export default async function ProviderDetailsPage({
                 placeholder="Short description shown on the dashboard and chat header."
               />
             </label>
+
+            <label className="flex items-start gap-3 rounded-2xl border border-white/15 bg-[#100a29]/80 p-4">
+              <input
+                name="isProProvider"
+                type="checkbox"
+                defaultChecked={providerConfig.isProProvider}
+                className="mt-1 h-5 w-5 rounded border-white/20 bg-white/10 accent-amber-200"
+              />
+              <span>
+                <span className="block text-base font-black text-white">
+                  Pro provider
+                </span>
+                <span className="mt-1 block text-sm leading-6 text-violet-100/70">
+                  Non-Pro users will see this provider disabled with a purchase Pro message.
+                </span>
+              </span>
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-bold text-slate-300">
+                AI model provider
+                <select name="aiProvider" defaultValue={providerConfig.aiProvider} className="mt-3 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-3 text-base font-bold text-white outline-none transition focus:border-amber-200/70">
+                  {AI_PROVIDER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm font-bold text-slate-300">
+                AI model
+                <select name="aiModel" defaultValue={providerConfig.aiModel} className="mt-3 w-full rounded-[1.5rem] border border-white/10 bg-[#100a29]/90 px-4 py-3 text-base font-bold text-white outline-none transition focus:border-amber-200/70">
+                  {AI_PROVIDER_OPTIONS.flatMap((option) => option.models.map((model) => (
+                    <option key={`${option.value}-${model}`} value={model}>{option.label}: {model}</option>
+                  )))}
+                </select>
+              </label>
+            </div>
 
             <label className="block text-sm font-bold text-slate-300">
               Maximum output tokens

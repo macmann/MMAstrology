@@ -21,6 +21,7 @@ import {
   serializeAdsEnabledSetting,
 } from "@/lib/ad-settings";
 import { prisma } from "@/lib/prisma";
+import { AI_PROVIDER_OPTIONS, getAiProviderOption, isAiProviderType } from "@/lib/ai-providers";
 import {
   CHAT_HISTORY_CONTEXT_PROMPT_KEY,
   parseChatHistoryContextSetting,
@@ -33,6 +34,9 @@ type ProviderSummary = {
   displayName: string;
   description: string;
   isActive: boolean;
+  isProProvider: boolean;
+  aiProvider: string;
+  aiModel: string;
   systemPrompt: string;
   maxOutputTokens: number;
   updatedAt: Date;
@@ -47,6 +51,7 @@ type UserSummary = {
   dailyFreeCredits: number;
   purchasedCredits: number;
   isBanned: boolean;
+  isPro: boolean;
   banReason: string | null;
   createdAt: Date;
   astrologicalProfile: { id: string } | null;
@@ -184,6 +189,73 @@ export default async function AdminDashboardPage() {
       });
     }
 
+    revalidatePath("/admin/dashboard");
+  }
+
+  async function createProvider(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+
+    const name = String(formData.get("name") ?? "").trim();
+    const displayName = String(formData.get("displayName") ?? "").trim() || name;
+    const description = String(formData.get("description") ?? "").trim();
+    const aiProviderRaw = String(formData.get("aiProvider") ?? "").trim();
+
+    if (!name || name.length > 80 || !isAiProviderType(aiProviderRaw)) {
+      return;
+    }
+
+    const modelOptions = getAiProviderOption(aiProviderRaw).models;
+    const requestedModel = String(formData.get("aiModel") ?? "").trim();
+    const aiModel = modelOptions.some((model) => model === requestedModel)
+      ? requestedModel
+      : getAiProviderOption(aiProviderRaw).defaultModel;
+
+    await prisma.providerConfig.create({
+      data: {
+        name,
+        displayName,
+        description,
+        isActive: formData.get("isActive") === "on",
+        isProProvider: formData.get("isProProvider") === "on",
+        aiProvider: aiProviderRaw,
+        aiModel,
+        systemPrompt: String(formData.get("systemPrompt") ?? "").trim(),
+      },
+    }).catch(() => null);
+
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/dashboard");
+  }
+
+  async function deleteProvider(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+    const providerId = String(formData.get("providerId") ?? "").trim();
+
+    if (!providerId) {
+      return;
+    }
+
+    await prisma.providerConfig.delete({ where: { id: providerId } }).catch(() => null);
+    revalidatePath("/admin/dashboard");
+    revalidatePath("/dashboard");
+  }
+
+  async function setUserProStatus(formData: FormData) {
+    "use server";
+
+    await requireAdmin();
+    const targetUserId = String(formData.get("targetUserId") ?? "").trim();
+    const isPro = formData.get("isPro") === "true";
+
+    if (!targetUserId) {
+      return;
+    }
+
+    await prisma.user.update({ where: { id: targetUserId }, data: { isPro } });
     revalidatePath("/admin/dashboard");
   }
 
@@ -377,6 +449,9 @@ export default async function AdminDashboardPage() {
         displayName: true,
         description: true,
         isActive: true,
+        isProProvider: true,
+        aiProvider: true,
+        aiModel: true,
         systemPrompt: true,
         maxOutputTokens: true,
         updatedAt: true,
@@ -404,6 +479,7 @@ export default async function AdminDashboardPage() {
         dailyFreeCredits: true,
         purchasedCredits: true,
         isBanned: true,
+        isPro: true,
         banReason: true,
         createdAt: true,
         astrologicalProfile: { select: { id: true } },
@@ -620,6 +696,34 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
+          <form action={createProvider} className="mb-5 grid gap-4 rounded-2xl border border-amber-200/20 bg-[#100a29]/80 p-4 lg:grid-cols-2">
+            <div className="lg:col-span-2">
+              <h3 className="text-lg font-black text-white">Create provider</h3>
+              <p className="mt-1 text-sm leading-6 text-violet-100/70">
+                Add a new astrologer, choose the AI company and model, and optionally restrict it to Pro users.
+              </p>
+            </div>
+            <input name="name" required maxLength={80} placeholder="Internal provider key / route name" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm font-bold text-white outline-none" />
+            <input name="displayName" maxLength={80} placeholder="Display name" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm font-bold text-white outline-none" />
+            <select name="aiProvider" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm font-bold text-white outline-none">
+              {AI_PROVIDER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <select name="aiModel" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm font-bold text-white outline-none">
+              {AI_PROVIDER_OPTIONS.flatMap((option) => option.models.map((model) => (
+                <option key={`${option.value}-${model}`} value={model}>{option.label}: {model}</option>
+              )))}
+            </select>
+            <textarea name="description" maxLength={280} placeholder="Public description" className="rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm text-white outline-none lg:col-span-2" />
+            <textarea name="systemPrompt" placeholder="System prompt" className="min-h-36 rounded-2xl border border-white/10 bg-[#100a29] px-4 py-3 text-sm text-white outline-none lg:col-span-2" />
+            <label className="flex items-center gap-2 text-sm font-bold text-violet-100"><input name="isActive" type="checkbox" defaultChecked className="accent-amber-200" /> Active</label>
+            <label className="flex items-center gap-2 text-sm font-bold text-violet-100"><input name="isProProvider" type="checkbox" className="accent-amber-200" /> Pro provider</label>
+            <div className="lg:col-span-2 flex justify-end">
+              <AdminSubmitButton className="rounded-full bg-amber-200 px-6 py-3 text-sm font-black text-[#160b2f]" pendingText="Creating..." successText="Provider created successfully.">Create provider</AdminSubmitButton>
+            </div>
+          </form>
+
           <div className="grid gap-4 xl:grid-cols-2">
             {providers.map((provider) => (
               <div
@@ -641,6 +745,9 @@ export default async function AdminDashboardPage() {
                       >
                         {provider.isActive ? "Active" : "Inactive"}
                       </span>
+                      {provider.isProProvider ? (
+                        <span className="rounded-full border border-amber-200/30 bg-amber-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-100">Pro</span>
+                      ) : null}
                     </div>
                     <p className="mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       Internal key: {provider.name}
@@ -650,7 +757,7 @@ export default async function AdminDashboardPage() {
                         "No public description has been saved yet."}
                     </p>
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                      Maximum output tokens: {provider.maxOutputTokens}
+                      AI: {getAiProviderOption(provider.aiProvider as never).label} · {provider.aiModel} · Max tokens: {provider.maxOutputTokens}
                     </p>
                     <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                       System prompt
@@ -696,6 +803,12 @@ export default async function AdminDashboardPage() {
                     >
                       Configure
                     </Link>
+                    <form action={deleteProvider}>
+                      <input type="hidden" name="providerId" value={provider.id} />
+                      <AdminSubmitButton className="w-full rounded-full border border-rose-200/25 px-4 py-2 text-center text-sm font-black text-rose-100 transition hover:bg-rose-500/20 sm:w-auto" pendingText="Deleting..." successText="Provider deleted successfully.">
+                        Delete
+                      </AdminSubmitButton>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -926,6 +1039,11 @@ export default async function AdminDashboardPage() {
                         >
                           {user.isBanned ? "Banned" : "Active"}
                         </span>
+                        {user.isPro ? (
+                          <span className="rounded-full border border-amber-200/30 bg-amber-200/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-amber-100">
+                            Pro
+                          </span>
+                        ) : null}
                         {isSelf ? (
                           <span className="rounded-full border border-amber-200/30 bg-amber-200/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-amber-100">
                             You
@@ -1018,6 +1136,24 @@ export default async function AdminDashboardPage() {
                         >
                           Apply credit change
                         </AdminSubmitButton>
+                      </form>
+
+                      <form
+                        action={setUserProStatus}
+                        className="rounded-2xl border border-amber-200/20 bg-amber-200/10 p-3"
+                      >
+                        <input type="hidden" name="targetUserId" value={user.id} />
+                        <input type="hidden" name="isPro" value={user.isPro ? "false" : "true"} />
+                        <AdminSubmitButton
+                          className="w-full rounded-full bg-amber-200 px-4 py-2 text-sm font-black text-[#160b2f] transition hover:bg-amber-100"
+                          pendingText={user.isPro ? "Disabling Pro..." : "Enabling Pro..."}
+                          successText="Pro mode updated successfully."
+                        >
+                          {user.isPro ? "Disable Pro mode" : "Enable Pro mode"}
+                        </AdminSubmitButton>
+                        <p className="mt-2 text-xs leading-5 text-violet-100/70">
+                          Pro mode is admin-only and unlocks providers marked as Pro.
+                        </p>
                       </form>
 
                       <form

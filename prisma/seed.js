@@ -26,6 +26,8 @@ const DEFAULT_DAILY_READING_PROMPT = [
 const DEFAULT_PROVIDERS = [
   {
     name: "Sayar Gyi",
+    aiProvider: "OPENAI",
+    aiModel: "gpt-4o-mini",
     displayName: "Sayar Gyi",
     description: "Ancient Myanmar wisdom with clear timing and grounded answers.",
     systemPrompt:
@@ -33,6 +35,8 @@ const DEFAULT_PROVIDERS = [
   },
   {
     name: "Daw Nilar",
+    aiProvider: "ANTHROPIC",
+    aiModel: "claude-3-5-haiku-latest",
     displayName: "Daw Nilar",
     description: "Gentle readings for love, healing, and emotional clarity.",
     systemPrompt:
@@ -40,6 +44,8 @@ const DEFAULT_PROVIDERS = [
   },
   {
     name: "Min Thet",
+    aiProvider: "GOOGLE",
+    aiModel: "gemini-1.5-flash",
     displayName: "Min Thet",
     description: "Practical star-powered advice for decisions and next steps.",
     systemPrompt:
@@ -47,6 +53,8 @@ const DEFAULT_PROVIDERS = [
   },
   {
     name: "Ko Tar Yar",
+    aiProvider: "XAI",
+    aiModel: "grok-2-latest",
     displayName: "Ko Tar Yar",
     description: "Witty, direct insights that cut through confusion with heart.",
     systemPrompt:
@@ -81,6 +89,8 @@ async function main() {
           displayName: provider.displayName,
           description: provider.description,
           isActive: true,
+          aiProvider: provider.aiProvider,
+          aiModel: provider.aiModel,
           systemPrompt: provider.systemPrompt,
         },
       }),

@@ -87,8 +87,13 @@ export function DashboardClient({
           {availableAstrologers.map((astrologer) => (
             <Link
               key={astrologer.providerName}
-              href={`/chat/${encodeURIComponent(astrologer.providerName)}`}
-              className="group grid grid-cols-[1fr_auto] items-center gap-3 rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-3 shadow-xl shadow-violet-950/20 backdrop-blur transition hover:border-amber-200/40 hover:bg-white/[0.12] active:scale-[0.99]"
+              href={astrologer.isLocked ? "/profile/settings" : `/chat/${encodeURIComponent(astrologer.providerName)}`}
+              aria-disabled={astrologer.isLocked}
+              className={`group grid grid-cols-[1fr_auto] items-center gap-3 rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-3 shadow-xl shadow-violet-950/20 backdrop-blur transition active:scale-[0.99] ${
+                astrologer.isLocked
+                  ? "opacity-65"
+                  : "hover:border-amber-200/40 hover:bg-white/[0.12]"
+              }`}
             >
               <article className="min-w-0">
                 <div className="flex items-center gap-3">
@@ -101,9 +106,14 @@ export function DashboardClient({
                   </div>
                 </div>
                 <p className="mt-3 line-clamp-2 text-sm leading-5 text-violet-100/65">{astrologer.tagline}</p>
+                {astrologer.isLocked ? (
+                  <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-amber-200">
+                    Purchase Pro to access this specialized provider.
+                  </p>
+                ) : null}
               </article>
               <span className="rounded-full bg-amber-100/10 px-3 py-2 text-xs font-black text-amber-200 transition group-hover:bg-amber-200 group-hover:text-[#160b2f]">
-                {t("dashboard.chat")}
+                {astrologer.isLocked ? "Purchase Pro" : t("dashboard.chat")}
               </span>
             </Link>
           ))}

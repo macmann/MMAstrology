@@ -13,10 +13,10 @@ import {
   CHAT_HISTORY_CONTEXT_PROMPT_KEY,
   parseChatHistoryContextSetting,
 } from "@/lib/chat-settings";
+import { getAiProviderOption } from "@/lib/ai-providers";
+import type { AiProviderType } from "@prisma/client";
 
 export const runtime = "nodejs";
-
-type ChatProviderName = "Sayar Gyi" | "Daw Nilar" | "Min Thet" | "Ko Tar Yar";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -30,47 +30,10 @@ type ProviderStreamChunk =
 const DEFAULT_MAX_OUTPUT_TOKENS = 400;
 
 type ProviderConfig = {
-  personaName: ChatProviderName;
-  tone: string;
-  envKey: string;
-  modelEnvKey: string;
-  defaultModel: string;
+  personaName: string;
+  aiProvider: AiProviderType;
+  model: string;
 };
-
-const PROVIDERS: Record<ChatProviderName, ProviderConfig> = {
-  "Sayar Gyi": {
-    personaName: "Sayar Gyi",
-    tone: "Traditional, authoritative tone",
-    envKey: "OPENAI_API_KEY",
-    modelEnvKey: "OPENAI_MODEL",
-    defaultModel: "gpt-4o-mini",
-  },
-  "Daw Nilar": {
-    personaName: "Daw Nilar",
-    tone: "Compassionate, psychological tone",
-    envKey: "ANTHROPIC_API_KEY",
-    modelEnvKey: "ANTHROPIC_MODEL",
-    defaultModel: "claude-3-5-haiku-latest",
-  },
-  "Min Thet": {
-    personaName: "Min Thet",
-    tone: "Modern, practical, direct tone",
-    envKey: "GOOGLE_GENAI_API_KEY",
-    modelEnvKey: "GOOGLE_GENAI_MODEL",
-    defaultModel: "gemini-1.5-flash",
-  },
-  "Ko Tar Yar": {
-    personaName: "Ko Tar Yar",
-    tone: "Witty, slightly cynical, but insightful tone",
-    envKey: "XAI_API_KEY",
-    modelEnvKey: "XAI_MODEL",
-    defaultModel: "grok-2-latest",
-  },
-};
-
-function isChatProviderName(value: unknown): value is ChatProviderName {
-  return typeof value === "string" && value in PROVIDERS;
-}
 
 function normalizeApiKey(rawApiKey: string) {
   let apiKey = rawApiKey.trim();
@@ -94,11 +57,10 @@ function normalizeApiKey(rawApiKey: string) {
 }
 
 function getApiKey(config: ProviderConfig) {
+  const option = getAiProviderOption(config.aiProvider);
   const rawApiKey =
-    process.env[config.envKey] ??
-    (config.personaName === "Min Thet"
-      ? process.env.GEMINI_API_KEY
-      : undefined);
+    process.env[option.envKey] ??
+    (config.aiProvider === "GOOGLE" ? process.env.GEMINI_API_KEY : undefined);
 
   return rawApiKey ? normalizeApiKey(rawApiKey) : undefined;
 }
@@ -115,9 +77,6 @@ function assertHeaderSafeApiKey(apiKey: string, envKey: string) {
   }
 }
 
-function getModel(config: ProviderConfig) {
-  return process.env[config.modelEnvKey] ?? config.defaultModel;
-}
 
 function parseSseDataBlocks(buffer: string) {
   return buffer
@@ -433,14 +392,14 @@ function streamProvider(
   const apiKey = getApiKey(config);
 
   if (!apiKey) {
-    throw new Error(`${config.envKey} is not configured.`);
+    throw new Error(`${getAiProviderOption(config.aiProvider).envKey} is not configured.`);
   }
 
-  assertHeaderSafeApiKey(apiKey, config.envKey);
+  assertHeaderSafeApiKey(apiKey, getAiProviderOption(config.aiProvider).envKey);
 
-  const model = getModel(config);
+  const model = config.model;
 
-  if (config.personaName === "Sayar Gyi") {
+  if (config.aiProvider === "OPENAI") {
     return streamOpenAiCompatibleProvider({
       apiKey,
       baseUrl: "https://api.openai.com/v1",
@@ -453,7 +412,7 @@ function streamProvider(
     });
   }
 
-  if (config.personaName === "Daw Nilar") {
+  if (config.aiProvider === "ANTHROPIC") {
     return streamAnthropicProvider({
       apiKey,
       model,
@@ -463,7 +422,7 @@ function streamProvider(
     });
   }
 
-  if (config.personaName === "Min Thet") {
+  if (config.aiProvider === "GOOGLE") {
     return streamGoogleProvider({
       apiKey,
       model,
@@ -538,14 +497,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const providerName = searchParams.get("providerName");
 
-  if (!isChatProviderName(providerName)) {
-    return NextResponse.json(
-      {
-        error:
-          "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar.",
-      },
-      { status: 400 },
-    );
+  if (!providerName) {
+    return NextResponse.json({ error: "providerName is required." }, { status: 400 });
   }
 
   const [credits, messages] = await Promise.all([
@@ -612,14 +565,8 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isChatProviderName(providerName)) {
-    return NextResponse.json(
-      {
-        error:
-          "providerName must be one of: Sayar Gyi, Daw Nilar, Min Thet, Ko Tar Yar.",
-      },
-      { status: 400 },
-    );
+  if (!providerName) {
+    return NextResponse.json({ error: "providerName is required." }, { status: 400 });
   }
 
   const userWithCredits = await checkAndResetCredits(session.userId);
@@ -653,6 +600,9 @@ export async function POST(request: Request) {
         isActive: true,
         systemPrompt: true,
         maxOutputTokens: true,
+        isProProvider: true,
+        aiProvider: true,
+        aiModel: true,
       },
     }),
     prisma.promptConfig.findUnique({
@@ -665,6 +615,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Please complete your astrological profile before chatting." },
       { status: 400 },
+    );
+  }
+
+  if (providerConfig?.isProProvider && !userWithCredits.isPro) {
+    return NextResponse.json(
+      { error: "Purchase Pro to access this specialized provider." },
+      { status: 403 },
     );
   }
 
@@ -707,8 +664,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const config = PROVIDERS[providerName];
-  const model = getModel(config);
+  const config: ProviderConfig = {
+    personaName: providerName,
+    aiProvider: providerConfig.aiProvider,
+    model: providerConfig.aiModel,
+  };
+  const model = config.model;
   const maxOutputTokens =
     providerConfig.maxOutputTokens || DEFAULT_MAX_OUTPUT_TOKENS;
   const systemPrompt = buildSystemPrompt(

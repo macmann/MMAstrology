@@ -28,6 +28,7 @@ export async function checkAndResetCredits(userId: string, now = new Date()) {
       id: true,
       dailyFreeCredits: true,
       purchasedCredits: true,
+      isPro: true,
       lastCreditReset: true,
     },
   });

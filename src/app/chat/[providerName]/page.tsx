@@ -1,36 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
+import { mergeAstrologerDisplayConfig } from "@/lib/astrologers";
 import { prisma } from "@/lib/prisma";
 import { ChatInterface } from "./ChatInterface";
-
-const chatProviders = {
-  "Sayar Gyi": {
-    title: "Traditional Master",
-    subtitle: "Authoritative Vedic-style guidance",
-    symbol: "☀️",
-    gradient: "from-amber-300 via-orange-500 to-rose-700",
-  },
-  "Daw Nilar": {
-    title: "Compassionate Guide",
-    subtitle: "Gentle emotional insight",
-    symbol: "🌙",
-    gradient: "from-fuchsia-300 via-pink-500 to-purple-800",
-  },
-  "Min Thet": {
-    title: "Modern Strategist",
-    subtitle: "Practical next-step advice",
-    symbol: "✨",
-    gradient: "from-cyan-300 via-blue-500 to-indigo-800",
-  },
-  "Ko Tar Yar": {
-    title: "Cosmic Truth-Teller",
-    subtitle: "Witty and direct readings",
-    symbol: "🪐",
-    gradient: "from-emerald-300 via-teal-500 to-slate-900",
-  },
-} as const;
-
-type ChatProviderName = keyof typeof chatProviders;
 
 type ChatPageProps = {
   params: Promise<{
@@ -46,10 +18,6 @@ function safeDecodeProviderName(value: string) {
   }
 }
 
-function isChatProviderName(value: string): value is ChatProviderName {
-  return value in chatProviders;
-}
-
 export default async function ChatPage({ params }: ChatPageProps) {
   const session = await getCurrentSession();
 
@@ -60,14 +28,11 @@ export default async function ChatPage({ params }: ChatPageProps) {
   const { providerName: providerNameParam } = await params;
   const providerName = safeDecodeProviderName(providerNameParam);
 
-  if (!isChatProviderName(providerName)) {
-    notFound();
-  }
-
   const [user, providerConfig] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId },
       select: {
+        isPro: true,
         astrologicalProfile: {
           select: { id: true },
         },
@@ -75,7 +40,13 @@ export default async function ChatPage({ params }: ChatPageProps) {
     }),
     prisma.providerConfig.findUnique({
       where: { name: providerName },
-      select: { isActive: true, displayName: true, description: true },
+      select: {
+        name: true,
+        isActive: true,
+        isProProvider: true,
+        displayName: true,
+        description: true,
+      },
     }),
   ]);
 
@@ -91,18 +62,20 @@ export default async function ChatPage({ params }: ChatPageProps) {
     notFound();
   }
 
-  const provider = chatProviders[providerName];
-  const providerDisplayName = providerConfig.displayName.trim() || providerName;
-  const providerSubtitle = providerConfig.description.trim() || provider.subtitle;
+  if (providerConfig.isProProvider && !user.isPro) {
+    redirect("/dashboard");
+  }
+
+  const provider = mergeAstrologerDisplayConfig(providerConfig);
 
   return (
     <ChatInterface
       providerName={providerName}
-      providerDisplayName={providerDisplayName}
-      providerTitle={provider.title}
-      providerSubtitle={providerSubtitle}
+      providerDisplayName={provider.name}
+      providerTitle={provider.honorific}
+      providerSubtitle={provider.tagline}
       providerSymbol={provider.symbol}
-      providerGradient={provider.gradient}
+      providerGradient={provider.accent}
     />
   );
 }
