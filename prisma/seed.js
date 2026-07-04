@@ -15,10 +15,10 @@ const DEFAULT_DAILY_FREE_CREDIT_ALLOWANCE = 4;
 
 const DEFAULT_DAILY_READING_PROMPT = [
   "Create the user's daily astrology reading from their saved birth profile and today's date.",
-  "The reading must include: Your today reading of Love, Business, Health; plus general Dos and Don'ts for the day that are not limited to or grouped by Love, Business, or Health.",
+  "The reading must include these five standalone sections in both languages: Love, Business, Health, Dos, and Don'ts.",
   "Return strict JSON only with keys en and my. Do not include markdown or extra keys.",
   "Each language should be concise, warm, specific, and easy to scan.",
-  "Use the exact section labels in English: Love, Business, Health, Dos, Don'ts. Keep Dos and Don'ts as standalone general guidance; do not prefix them with Love, Business, or Health.",
+  "For en, use the exact section labels: Love, Business, Health, Dos, Don'ts. For my, localize those labels as: အချစ်ရေး, စီးပွားရေး, ကျန်းမာရေး, လုပ်သင့်သည်များ, မလုပ်သင့်သည်များ. Keep Dos and Don'ts as standalone general guidance; do not prefix them with Love, Business, or Health.",
   "The my value must be a natural Burmese/Myanmar translation of the same reading, not a separate interpretation.",
   "Avoid deterministic promises and avoid medical/legal/financial advice.",
 ].join("\n");

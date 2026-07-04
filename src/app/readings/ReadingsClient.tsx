@@ -77,11 +77,11 @@ function ReadingPanel({ eyebrow, title, children }: Readonly<{ eyebrow: string; 
 }
 
 const dailyAspectDefinitions = [
-  { key: "love", group: "core", labelKey: "readings.aspectLove", icon: "💗", aliases: ["Love"] },
-  { key: "business", group: "core", labelKey: "readings.aspectBusiness", icon: "💼", aliases: ["Business", "Career", "Work"] },
-  { key: "health", group: "core", labelKey: "readings.aspectHealth", icon: "🌿", aliases: ["Health", "Wellness"] },
-  { key: "dos", group: "guidance", labelKey: "readings.aspectDos", icon: "✨", aliases: ["Dos", "Do"] },
-  { key: "donts", group: "guidance", labelKey: "readings.aspectDonts", icon: "🌘", aliases: ["Don'ts", "Donts", "Do not", "Don’ts"] },
+  { key: "love", group: "core", labelKey: "readings.aspectLove", icon: "💗", aliases: ["Love", "အချစ်ရေး"] },
+  { key: "business", group: "core", labelKey: "readings.aspectBusiness", icon: "💼", aliases: ["Business", "Career", "Work", "စီးပွားရေး", "အလုပ်အကိုင်"] },
+  { key: "health", group: "core", labelKey: "readings.aspectHealth", icon: "🌿", aliases: ["Health", "Wellness", "ကျန်းမာရေး"] },
+  { key: "dos", group: "guidance", labelKey: "readings.aspectDos", icon: "✨", aliases: ["Dos", "Do", "လုပ်သင့်သည်များ", "လုပ်ရန်"] },
+  { key: "donts", group: "guidance", labelKey: "readings.aspectDonts", icon: "🌘", aliases: ["Don'ts", "Donts", "Do not", "Don’ts", "မလုပ်သင့်သည်များ", "ရှောင်ရန်"] },
 ] as const;
 
 function escapeRegExp(value: string) {
@@ -90,7 +90,7 @@ function escapeRegExp(value: string) {
 
 function cleanGeneralGuidanceBody(value: string) {
   return value
-    .replace(/\b(?:Love|Business|Career|Work|Health|Wellness)\s*(?:[:：—–-])\s*/gi, "")
+    .replace(/(^|\s)(?:Love|Business|Career|Work|Health|Wellness|အချစ်ရေး|စီးပွားရေး|အလုပ်အကိုင်|ကျန်းမာရေး)\s*(?:[:：—–-])\s*/gi, "$1")
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
