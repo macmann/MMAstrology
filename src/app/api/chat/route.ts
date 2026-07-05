@@ -35,6 +35,10 @@ type ProviderConfig = {
   model: string;
 };
 
+function supportsCustomTemperature(model: string) {
+  return model.trim().toLowerCase() !== "gpt-5.5";
+}
+
 function normalizeApiKey(rawApiKey: string) {
   let apiKey = rawApiKey.trim();
 
@@ -140,10 +144,13 @@ async function* streamOpenAiCompatibleProvider(options: {
       { role: "system", content: options.systemPrompt },
       ...options.messages,
     ],
-    temperature: 0.8,
     [maxTokensParameter]: options.maxOutputTokens,
     stream: true,
   };
+
+  if (supportsCustomTemperature(options.model)) {
+    requestBody.temperature = 0.8;
+  }
 
   if (options.includeUsage) {
     requestBody.stream_options = { include_usage: true };
