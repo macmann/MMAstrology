@@ -89,12 +89,21 @@ export function DashboardClient({
               key={astrologer.providerName}
               href={astrologer.isLocked ? "/profile/settings" : `/chat/${encodeURIComponent(astrologer.providerName)}`}
               aria-disabled={astrologer.isLocked}
-              className={`group grid grid-cols-[1fr_auto] items-center gap-3 rounded-[1.7rem] border border-white/15 bg-white/[0.08] p-3 shadow-xl shadow-violet-950/20 backdrop-blur transition active:scale-[0.99] ${
+              className={`group relative grid grid-cols-[1fr_auto] items-center gap-3 overflow-hidden rounded-[1.7rem] border p-3 shadow-xl backdrop-blur transition active:scale-[0.99] ${
+                astrologer.isProProvider
+                  ? "border-amber-200/70 bg-gradient-to-br from-amber-200/20 via-white/[0.08] to-yellow-700/20 shadow-amber-950/30 ring-1 ring-amber-200/30"
+                  : "border-white/15 bg-white/[0.08] shadow-violet-950/20"
+              } ${
                 astrologer.isLocked
                   ? "opacity-65"
-                  : "hover:border-amber-200/40 hover:bg-white/[0.12]"
+                  : astrologer.isProProvider
+                    ? "hover:border-amber-100 hover:shadow-amber-900/40"
+                    : "hover:border-amber-200/40 hover:bg-white/[0.12]"
               }`}
             >
+              {astrologer.isProProvider ? (
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-100 to-transparent" />
+              ) : null}
               <article className="min-w-0">
                 <div className="flex items-center gap-3">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${astrologer.accent} text-2xl shadow-lg ${astrologer.glow}`}>
@@ -102,7 +111,14 @@ export function DashboardClient({
                   </div>
                   <div className="min-w-0">
                     <h3 className="truncate text-base font-black text-slate-50">{astrologer.name}</h3>
-                    <p className="truncate text-xs font-bold uppercase tracking-[0.12em] text-violet-100/65">{astrologer.honorific}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-xs font-bold uppercase tracking-[0.12em] text-violet-100/65">{astrologer.honorific}</p>
+                      {astrologer.isProProvider ? (
+                        <span className="rounded-full border border-amber-200/60 bg-amber-200/15 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-amber-100 shadow-sm shadow-amber-950/20">
+                          Premium
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
                 <p className="mt-3 line-clamp-2 text-sm leading-5 text-violet-100/65">{astrologer.tagline}</p>
@@ -112,7 +128,13 @@ export function DashboardClient({
                   </p>
                 ) : null}
               </article>
-              <span className="rounded-full bg-amber-100/10 px-3 py-2 text-xs font-black text-amber-200 transition group-hover:bg-amber-200 group-hover:text-[#160b2f]">
+              <span
+                className={`rounded-full px-3 py-2 text-xs font-black transition group-hover:bg-amber-200 group-hover:text-[#160b2f] ${
+                  astrologer.isProProvider
+                    ? "border border-amber-200/50 bg-amber-200/20 text-amber-100 shadow-sm shadow-amber-950/20"
+                    : "bg-amber-100/10 text-amber-200"
+                }`}
+              >
                 {astrologer.isLocked ? "Purchase Pro" : t("dashboard.chat")}
               </span>
             </Link>
