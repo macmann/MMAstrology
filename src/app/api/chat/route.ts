@@ -35,8 +35,27 @@ type ProviderConfig = {
   model: string;
 };
 
+function isOpenAiReasoningModel(model: string) {
+  const normalizedModel = model.trim().toLowerCase();
+
+  return (
+    normalizedModel.startsWith("gpt-5") ||
+    normalizedModel.startsWith("o1") ||
+    normalizedModel.startsWith("o3") ||
+    normalizedModel.startsWith("o4")
+  );
+}
+
 function supportsCustomTemperature(model: string) {
-  return model.trim().toLowerCase() !== "gpt-5.5";
+  return !isOpenAiReasoningModel(model);
+}
+
+function getOpenAiMaxCompletionTokens(model: string, maxOutputTokens: number) {
+  if (!isOpenAiReasoningModel(model)) {
+    return maxOutputTokens;
+  }
+
+  return Math.max(maxOutputTokens, 4096);
 }
 
 function normalizeApiKey(rawApiKey: string) {
@@ -136,6 +155,7 @@ async function* streamOpenAiCompatibleProvider(options: {
   maxOutputTokens: number;
   includeUsage?: boolean;
   maxTokensParameter?: "max_tokens" | "max_completion_tokens";
+  reasoningEffort?: "minimal" | "low" | "medium" | "high";
 }): AsyncGenerator<ProviderStreamChunk> {
   const maxTokensParameter = options.maxTokensParameter ?? "max_tokens";
   const requestBody: Record<string, unknown> = {
@@ -150,6 +170,10 @@ async function* streamOpenAiCompatibleProvider(options: {
 
   if (supportsCustomTemperature(options.model)) {
     requestBody.temperature = 0.8;
+  }
+
+  if (options.reasoningEffort) {
+    requestBody.reasoning_effort = options.reasoningEffort;
   }
 
   if (options.includeUsage) {
@@ -413,9 +437,10 @@ function streamProvider(
       model,
       systemPrompt,
       messages,
-      maxOutputTokens,
+      maxOutputTokens: getOpenAiMaxCompletionTokens(model, maxOutputTokens),
       includeUsage: true,
       maxTokensParameter: "max_completion_tokens",
+      reasoningEffort: isOpenAiReasoningModel(model) ? "low" : undefined,
     });
   }
 
