@@ -8,7 +8,7 @@ import { AI_PROVIDER_OPTIONS, isAiProviderType, normalizeAiModel } from "@/lib/a
 
 const DEFAULT_MAX_OUTPUT_TOKENS = 400;
 const MIN_MAX_OUTPUT_TOKENS = 1;
-const MAX_MAX_OUTPUT_TOKENS = 4000;
+const MAX_MAX_OUTPUT_TOKENS = 40000;
 
 function parseMaxOutputTokens(value: FormDataEntryValue | null) {
   const maxOutputTokens = Number(String(value ?? "").trim());
