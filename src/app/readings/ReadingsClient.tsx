@@ -77,11 +77,11 @@ function ReadingPanel({ eyebrow, title, children }: Readonly<{ eyebrow: string; 
 }
 
 const dailyAspectDefinitions = [
-  { key: "love", group: "core", labelKey: "readings.aspectLove", icon: "💗", aliases: ["Love", "အချစ်ရေး"] },
-  { key: "business", group: "core", labelKey: "readings.aspectBusiness", icon: "💼", aliases: ["Business", "Career", "Work", "စီးပွားရေး", "အလုပ်အကိုင်"] },
-  { key: "health", group: "core", labelKey: "readings.aspectHealth", icon: "🌿", aliases: ["Health", "Wellness", "ကျန်းမာရေး"] },
-  { key: "dos", group: "guidance", labelKey: "readings.aspectDos", icon: "✨", aliases: ["Dos", "Do", "လုပ်သင့်သည်များ", "လုပ်ရန်"] },
-  { key: "donts", group: "guidance", labelKey: "readings.aspectDonts", icon: "🌘", aliases: ["Don'ts", "Donts", "Do not", "Don’ts", "မလုပ်သင့်သည်များ", "ရှောင်ရန်"] },
+  { key: "love", group: "core", labelKey: "readings.aspectLove", icon: "♡", accent: "from-rose-400/30 to-fuchsia-500/5", aliases: ["Love", "အချစ်ရေး"] },
+  { key: "business", group: "core", labelKey: "readings.aspectBusiness", icon: "↗", accent: "from-sky-400/30 to-indigo-500/5", aliases: ["Business", "Career", "Work", "စီးပွားရေး", "အလုပ်အကိုင်"] },
+  { key: "health", group: "core", labelKey: "readings.aspectHealth", icon: "✦", accent: "from-emerald-400/30 to-teal-500/5", aliases: ["Health", "Wellness", "ကျန်းမာရေး"] },
+  { key: "dos", group: "guidance", labelKey: "readings.aspectDos", icon: "✓", accent: "from-amber-300/25 to-orange-500/5", aliases: ["Dos", "Do", "လုပ်သင့်သည်များ", "လုပ်ရန်"] },
+  { key: "donts", group: "guidance", labelKey: "readings.aspectDonts", icon: "×", accent: "from-violet-400/25 to-fuchsia-500/5", aliases: ["Don'ts", "Donts", "Do not", "Don’ts", "မလုပ်သင့်သည်များ", "ရှောင်ရန်"] },
 ] as const;
 
 function escapeRegExp(value: string) {
@@ -217,16 +217,29 @@ export function ReadingsClient({ isAdsEnabled, view = "life" }: Readonly<Reading
       ? { eyebrow: t("readings.dailyEyebrow"), title: t("readings.dailyTitle"), subtitle: t("readings.dailySubtitle") }
       : { eyebrow: t("readings.lifeEyebrow"), title: t("readings.lifeTitle"), subtitle: t("readings.lifeSubtitle") };
   const dailyAspectCards = buildDailyAspectCards(dailyReading);
+  const readingDate = blueprint?.dailyReadingDate ? new Date(blueprint.dailyReadingDate) : new Date();
+  const isReadingFresh = blueprint?.dailyReadingDate
+    ? readingDate.toDateString() === new Date().toDateString()
+    : false;
+  const formattedReadingDate = new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(readingDate);
 
   return (
     <>
-      <header className="cosmic-header pb-14">
+      <header className={`cosmic-header ${view === "daily" ? "pb-20" : "pb-14"}`}>
         <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber-200/20 blur-3xl" />
         <div className="absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-fuchsia-400/20 blur-3xl" />
         <div className="relative">
-          <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">{pageCopy.eyebrow}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[0.7rem] font-black uppercase tracking-[0.42em] text-amber-200">{pageCopy.eyebrow}</p>
+            {view === "daily" && isReadingFresh ? <span className="rounded-full border border-emerald-200/20 bg-emerald-300/10 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.18em] text-emerald-100">{t("readings.freshToday")}</span> : null}
+          </div>
           <h1 className="mt-3 text-[2.35rem] font-black leading-[0.95] tracking-tight text-white">{pageCopy.title}</h1>
-          <p className="mt-4 text-sm leading-6 text-violet-100/80">{pageCopy.subtitle}</p>
+          <p className="mt-4 text-sm leading-6 text-violet-100/80">{view === "daily" ? formattedReadingDate : pageCopy.subtitle}</p>
         </div>
       </header>
 
@@ -310,36 +323,50 @@ export function ReadingsClient({ isAdsEnabled, view = "life" }: Readonly<Reading
             ) : null}
 
             {view === "daily" ? (
-              <section className="space-y-4">
-                <div className="rounded-[1.75rem] border border-amber-100/15 bg-amber-100/[0.08] p-5 shadow-xl shadow-violet-950/20 backdrop-blur">
-                  <p className="text-[0.66rem] font-black uppercase tracking-[0.32em] text-amber-100/70">{t("readings.todayEyebrow")}</p>
-                  <h2 className="mt-2 text-xl font-black tracking-tight text-white">{t("readings.dailyReading")}</h2>
-                  <p className="mt-3 text-sm font-bold leading-6 text-amber-100/85">{t("readings.todayLoveBusinessHealth")}</p>
-                  {blueprint.dailyReadingDate ? (
-                    <p className="mt-3 text-xs font-bold text-violet-100/50">
-                      {t("readings.generatedToday", {
-                        date: new Intl.DateTimeFormat(language === "my" ? "my-MM" : "en", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        }).format(new Date(blueprint.dailyReadingDate)),
-                      })}
-                    </p>
-                  ) : null}
+              <section className="space-y-5">
+                <div className="relative overflow-hidden rounded-[2rem] border border-amber-100/20 bg-gradient-to-br from-amber-100/15 via-fuchsia-300/10 to-sky-400/10 p-5 shadow-2xl shadow-violet-950/30 backdrop-blur-xl">
+                  <div className="absolute -right-8 -top-8 text-[9rem] leading-none text-white/[0.035]">{blueprint.glyph}</div>
+                  <div className="relative flex items-center gap-4">
+                    <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-[1.6rem] border border-amber-100/25 bg-[#1a1039]/60 text-4xl text-amber-100 shadow-inner shadow-amber-100/10">{blueprint.glyph}</div>
+                    <div className="min-w-0">
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.28em] text-violet-100/55">{t("readings.yourCosmicProfile")}</p>
+                      <h2 className="mt-1 text-2xl font-black text-white">{t(signTranslationKeys[blueprint.sunSign])}</h2>
+                      <p className="mt-1 text-sm font-bold text-amber-100/75">{t("readings.elementLabel", { element: translatedElement })} · {blueprint.birthLocation}</p>
+                    </div>
+                  </div>
+
+                  <div className="relative mt-5 border-t border-white/10 pt-4">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.28em] text-amber-100/60">{t("readings.todayAtGlance")}</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-violet-50/85">{t("readings.todayLoveBusinessHealth")}</p>
+                  </div>
+
+                  <nav aria-label={t("readings.jumpToInsight")} className="relative mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+                    {dailyAspectCards.map((aspect) => (
+                      <a key={aspect.key} href={`#daily-${aspect.key}`} className="shrink-0 rounded-full border border-white/10 bg-black/15 px-3 py-2 text-xs font-black text-violet-50/80 transition hover:border-amber-100/30 hover:text-white">
+                        {aspect.icon} {t(aspect.labelKey)}
+                      </a>
+                    ))}
+                  </nav>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <div className="mb-3 flex items-end justify-between">
+                    <div><p className="text-[0.62rem] font-black uppercase tracking-[0.3em] text-violet-100/50">{t("readings.dailyInfluences")}</p><h2 className="mt-1 text-xl font-black text-white">{t("readings.lifeAreas")}</h2></div>
+                    <span className="text-xs font-bold text-violet-100/45">3 {t("readings.insights")}</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
                   {dailyAspectCards
                     .filter((aspect) => aspect.group === "core")
                     .map((aspect) => (
                       <article
                         key={aspect.key}
-                        className="relative overflow-hidden rounded-[1.65rem] border border-white/10 bg-white/[0.075] p-5 shadow-xl shadow-violet-950/20 backdrop-blur"
+                        id={`daily-${aspect.key}`}
+                        className={`relative scroll-mt-5 overflow-hidden rounded-[1.65rem] border border-white/10 bg-gradient-to-br ${aspect.accent} bg-white/[0.06] p-5 shadow-xl shadow-violet-950/20 backdrop-blur`}
                       >
                         <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-fuchsia-300/10 blur-2xl" />
                         <div className="relative">
                           <div className="flex items-center gap-3">
-                            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-inner shadow-white/10">
+                            <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-xl font-black shadow-inner shadow-white/10">
                               {aspect.icon}
                             </span>
                             <h3 className="text-lg font-black text-white">{t(aspect.labelKey)}</h3>
@@ -348,15 +375,19 @@ export function ReadingsClient({ isAdsEnabled, view = "life" }: Readonly<Reading
                         </div>
                       </article>
                     ))}
+                  </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <div className="mb-3"><p className="text-[0.62rem] font-black uppercase tracking-[0.3em] text-violet-100/50">{t("readings.alignmentAdvice")}</p><h2 className="mt-1 text-xl font-black text-white">{t("readings.actionPlan")}</h2></div>
+                  <div className="grid gap-3 sm:grid-cols-2">
                   {dailyAspectCards
                     .filter((aspect) => aspect.group === "guidance")
                     .map((aspect) => (
                       <article
                         key={aspect.key}
-                        className="relative overflow-hidden rounded-[1.65rem] border border-amber-100/15 bg-amber-100/[0.08] p-5 shadow-xl shadow-violet-950/20 backdrop-blur"
+                        id={`daily-${aspect.key}`}
+                        className={`relative scroll-mt-5 overflow-hidden rounded-[1.65rem] border border-amber-100/15 bg-gradient-to-br ${aspect.accent} bg-white/[0.06] p-5 shadow-xl shadow-violet-950/20 backdrop-blur`}
                       >
                         <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-amber-200/10 blur-2xl" />
                         <div className="relative">
@@ -370,7 +401,10 @@ export function ReadingsClient({ isAdsEnabled, view = "life" }: Readonly<Reading
                         </div>
                       </article>
                     ))}
+                  </div>
                 </div>
+
+                <p className="px-2 text-center text-xs font-bold leading-5 text-violet-100/40">{t("readings.personalizedFromProfile", { time: blueprint.birthTime, location: blueprint.birthLocation })}</p>
               </section>
             ) : null}
           </>
