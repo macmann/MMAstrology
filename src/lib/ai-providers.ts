@@ -33,6 +33,13 @@ export const AI_PROVIDER_OPTIONS = [
     defaultModel: "grok-2-latest",
     suggestedModels: ["grok-2-latest", "grok-2-vision-latest", "grok-3-mini", "grok-3"],
   },
+  {
+    value: "DEEPSEEK",
+    label: "DeepSeek",
+    envKey: "DEEPSEEK_API_KEY",
+    defaultModel: "deepseek-v4-flash",
+    suggestedModels: ["deepseek-v4-flash", "deepseek-chat", "deepseek-reasoner"],
+  },
 ] as const satisfies readonly {
   value: AiProviderType;
   label: string;

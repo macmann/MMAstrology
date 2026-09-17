@@ -464,6 +464,18 @@ function streamProvider(
     });
   }
 
+  if (config.aiProvider === "DEEPSEEK") {
+    return streamOpenAiCompatibleProvider({
+      apiKey,
+      baseUrl: "https://api.deepseek.com",
+      model,
+      systemPrompt,
+      messages,
+      maxOutputTokens,
+      includeUsage: true,
+    });
+  }
+
   return streamOpenAiCompatibleProvider({
     apiKey,
     baseUrl: "https://api.x.ai/v1",

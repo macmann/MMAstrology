@@ -60,6 +60,15 @@ const DEFAULT_PROVIDERS = [
     systemPrompt:
       "You are Ko Tar Yar, an expert astrologer. Tone: Witty, slightly cynical, but insightful tone. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
   },
+  {
+    name: "DeepSeek V4 Flash",
+    aiProvider: "DEEPSEEK",
+    aiModel: "deepseek-v4-flash",
+    displayName: "DeepSeek V4 Flash",
+    description: "A sample DeepSeek-powered astrologer ready for you to customize.",
+    systemPrompt:
+      "You are DeepSeek V4 Flash, an expert astrologer. Give practical, compassionate astrology guidance that is easy to understand. Keep your advice grounded, helpful, and personalized to the user's birth details.",
+  },
 ];
 
 async function main() {

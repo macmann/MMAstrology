@@ -10,7 +10,7 @@ A monolithic AI astrology web application built with Next.js App Router, Tailwin
    cp .env.example .env
    ```
 
-   Required local values include `DATABASE_URL`, `JWT_SECRET`, and the AI provider keys used by the chat personas: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENAI_API_KEY` (or the legacy `GEMINI_API_KEY` alias), and `XAI_API_KEY`. Paste only the raw API key values into `.env` without `Bearer`, `Authorization:`, or line breaks. `ADMIN_SECRET` is required only when using the admin credit API without an admin session. Optional model override variables are included in `.env.example`.
+   Required local values include `DATABASE_URL`, `JWT_SECRET`, and the AI provider keys used by the chat personas: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENAI_API_KEY` (or the legacy `GEMINI_API_KEY` alias), `XAI_API_KEY`, and `DEEPSEEK_API_KEY`. Paste only the raw API key values into `.env` without `Bearer`, `Authorization:`, or line breaks. `ADMIN_SECRET` is required only when using the admin credit API without an admin session. Optional model override variables are included in `.env.example`.
 
 2. Install dependencies:
 
@@ -57,4 +57,3 @@ Start Command: npm start
 If you reset the Render database after a deploy and then see Prisma `P2021` errors such as `The table public.User does not exist`, redeploy the web service so the `render:build` Prisma deploy step can recreate the schema on the active `DATABASE_URL`.
 
 Required Render environment variables are `DATABASE_URL`, `JWT_SECRET`, and any AI provider keys you plan to use. The one-time overall sign reading uses `OPENAI_API_KEY` and the optional `lifereadingmodel` override, which defaults to `gpt-5.5`. The included `render.yaml` can create and link the PostgreSQL database automatically when deploying from the blueprint.
-
