@@ -142,7 +142,8 @@ function isDeepSeekReasoningModel(model: string) {
   return (
     normalizedModel.includes("reasoner") ||
     normalizedModel.includes("deepseek-r1") ||
-    normalizedModel.includes("v4-flash")
+    normalizedModel.includes("v4-flash") ||
+    normalizedModel.includes("deepseek-flash")
   );
 }
 
