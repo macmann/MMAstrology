@@ -58,6 +58,26 @@ function getOpenAiMaxCompletionTokens(model: string, maxOutputTokens: number) {
   return Math.max(maxOutputTokens, 4096);
 }
 
+function isDeepSeekReasoningModel(model: string) {
+  const normalizedModel = model.trim().toLowerCase();
+
+  return (
+    normalizedModel.includes("reasoner") ||
+    normalizedModel.includes("deepseek-r1") ||
+    normalizedModel.includes("v4-flash")
+  );
+}
+
+function getDeepSeekMaxCompletionTokens(model: string, maxOutputTokens: number) {
+  if (!isDeepSeekReasoningModel(model)) {
+    return maxOutputTokens;
+  }
+
+  // DeepSeek counts hidden reasoning tokens toward max_tokens. A small limit can
+  // therefore end the stream before the model emits any user-visible content.
+  return Math.max(maxOutputTokens, 4096);
+}
+
 function normalizeApiKey(rawApiKey: string) {
   let apiKey = rawApiKey.trim();
 
@@ -471,7 +491,7 @@ function streamProvider(
       model,
       systemPrompt,
       messages,
-      maxOutputTokens,
+      maxOutputTokens: getDeepSeekMaxCompletionTokens(model, maxOutputTokens),
       includeUsage: true,
     });
   }
