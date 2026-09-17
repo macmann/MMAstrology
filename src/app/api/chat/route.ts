@@ -27,6 +27,19 @@ type ProviderStreamChunk =
   | { type: "content"; content: string }
   | { type: "usage"; inputTokens?: number; outputTokens?: number };
 
+type ProviderDiagnostics = {
+  requestId: string;
+  httpStatus?: number;
+  responseContentType?: string;
+  providerRequestId?: string;
+  sseEvents: number;
+  contentChunks: number;
+  contentCharacters: number;
+  usageEvents: number;
+  finishReasons: string[];
+  lastEventSummary?: Record<string, unknown>;
+};
+
 const DEFAULT_MAX_OUTPUT_TOKENS = 400;
 
 type ProviderConfig = {
@@ -34,6 +47,71 @@ type ProviderConfig = {
   aiProvider: AiProviderType;
   model: string;
 };
+
+function logProviderEvent(
+  level: "info" | "warn" | "error",
+  event: string,
+  details: Record<string, unknown>,
+) {
+  console[level](`[ai-provider] ${event}`, details);
+}
+
+function summarizeProviderEvent(parsed: unknown) {
+  if (!parsed || typeof parsed !== "object") {
+    return { valueType: typeof parsed };
+  }
+
+  const event = parsed as Record<string, unknown>;
+  const choices = Array.isArray(event.choices) ? event.choices : [];
+  const candidates = Array.isArray(event.candidates) ? event.candidates : [];
+  const firstChoice = choices[0] as Record<string, unknown> | undefined;
+  const firstCandidate = candidates[0] as Record<string, unknown> | undefined;
+  const promptFeedback = event.promptFeedback as Record<string, unknown> | undefined;
+
+  return {
+    keys: Object.keys(event),
+    eventType: event.type,
+    choiceCount: choices.length,
+    candidateCount: candidates.length,
+    finishReason: firstChoice?.finish_reason ?? firstCandidate?.finishReason,
+    refusalPresent:
+      Boolean((firstChoice?.delta as Record<string, unknown> | undefined)?.refusal) ||
+      Boolean((firstChoice?.message as Record<string, unknown> | undefined)?.refusal),
+    blockReason: promptFeedback?.blockReason,
+    hasUsage: Boolean(event.usage ?? event.usageMetadata),
+    errorPresent: Boolean(event.error),
+  };
+}
+
+function recordProviderEvent(
+  diagnostics: ProviderDiagnostics,
+  parsed: unknown,
+) {
+  diagnostics.sseEvents += 1;
+  const summary = summarizeProviderEvent(parsed);
+  diagnostics.lastEventSummary = summary;
+  const finishReason = summary.finishReason;
+
+  if (
+    (typeof finishReason === "string" || typeof finishReason === "number") &&
+    !diagnostics.finishReasons.includes(String(finishReason))
+  ) {
+    diagnostics.finishReasons.push(String(finishReason));
+  }
+}
+
+function recordProviderResponse(
+  response: Response,
+  diagnostics: ProviderDiagnostics,
+) {
+  diagnostics.httpStatus = response.status;
+  diagnostics.responseContentType = response.headers.get("content-type") ?? undefined;
+  diagnostics.providerRequestId =
+    response.headers.get("x-request-id") ??
+    response.headers.get("request-id") ??
+    response.headers.get("x-goog-request-id") ??
+    undefined;
+}
 
 function isOpenAiReasoningModel(model: string) {
   const normalizedModel = model.trim().toLowerCase();
@@ -176,6 +254,7 @@ async function* streamOpenAiCompatibleProvider(options: {
   includeUsage?: boolean;
   maxTokensParameter?: "max_tokens" | "max_completion_tokens";
   reasoningEffort?: "minimal" | "low" | "medium" | "high";
+  diagnostics: ProviderDiagnostics;
 }): AsyncGenerator<ProviderStreamChunk> {
   const maxTokensParameter = options.maxTokensParameter ?? "max_tokens";
   const requestBody: Record<string, unknown> = {
@@ -208,6 +287,7 @@ async function* streamOpenAiCompatibleProvider(options: {
     },
     body: JSON.stringify(requestBody),
   });
+  recordProviderResponse(response, options.diagnostics);
 
   if (!response.ok) {
     throw new Error(
@@ -235,9 +315,11 @@ async function* streamOpenAiCompatibleProvider(options: {
       }
 
       const parsed = JSON.parse(data);
+      recordProviderEvent(options.diagnostics, parsed);
       const usage = parsed?.usage;
 
       if (usage) {
+        options.diagnostics.usageEvents += 1;
         yield {
           type: "usage",
           inputTokens: usage.prompt_tokens,
@@ -248,6 +330,8 @@ async function* streamOpenAiCompatibleProvider(options: {
       const content = parsed?.choices?.[0]?.delta?.content;
 
       if (typeof content === "string") {
+        options.diagnostics.contentChunks += 1;
+        options.diagnostics.contentCharacters += content.length;
         yield { type: "content", content };
       }
     }
@@ -264,6 +348,7 @@ async function* streamAnthropicProvider(options: {
   systemPrompt: string;
   messages: ChatMessage[];
   maxOutputTokens: number;
+  diagnostics: ProviderDiagnostics;
 }): AsyncGenerator<ProviderStreamChunk> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -281,6 +366,7 @@ async function* streamAnthropicProvider(options: {
       stream: true,
     }),
   });
+  recordProviderResponse(response, options.diagnostics);
 
   if (!response.ok) {
     throw new Error(
@@ -304,10 +390,12 @@ async function* streamAnthropicProvider(options: {
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       const parsed = JSON.parse(data);
+      recordProviderEvent(options.diagnostics, parsed);
       const messageUsage = parsed?.message?.usage;
       const deltaUsage = parsed?.usage;
 
       if (messageUsage) {
+        options.diagnostics.usageEvents += 1;
         yield {
           type: "usage",
           inputTokens: messageUsage.input_tokens,
@@ -316,6 +404,7 @@ async function* streamAnthropicProvider(options: {
       }
 
       if (deltaUsage) {
+        options.diagnostics.usageEvents += 1;
         yield {
           type: "usage",
           inputTokens: deltaUsage.input_tokens,
@@ -326,6 +415,8 @@ async function* streamAnthropicProvider(options: {
       const text = parsed?.delta?.text;
 
       if (typeof text === "string") {
+        options.diagnostics.contentChunks += 1;
+        options.diagnostics.contentCharacters += text.length;
         yield { type: "content", content: text };
       }
     }
@@ -359,6 +450,7 @@ async function* streamGoogleProvider(options: {
   systemPrompt: string;
   messages: ChatMessage[];
   maxOutputTokens: number;
+  diagnostics: ProviderDiagnostics;
 }): AsyncGenerator<ProviderStreamChunk> {
   const thinkingConfig = getGoogleThinkingConfig(options.model);
 
@@ -385,6 +477,7 @@ async function* streamGoogleProvider(options: {
       }),
     },
   );
+  recordProviderResponse(response, options.diagnostics);
 
   if (!response.ok) {
     throw new Error(
@@ -408,9 +501,11 @@ async function* streamGoogleProvider(options: {
 
     for (const data of parseSseDataBlocks(blocks.join("\n\n"))) {
       const parsed = JSON.parse(data);
+      recordProviderEvent(options.diagnostics, parsed);
       const usage = parsed?.usageMetadata;
 
       if (usage) {
+        options.diagnostics.usageEvents += 1;
         yield {
           type: "usage",
           inputTokens: usage.promptTokenCount,
@@ -424,6 +519,8 @@ async function* streamGoogleProvider(options: {
         .join("\n");
 
       if (typeof content === "string") {
+        options.diagnostics.contentChunks += 1;
+        options.diagnostics.contentCharacters += content.length;
         yield { type: "content", content };
       }
     }
@@ -439,6 +536,7 @@ function streamProvider(
   systemPrompt: string,
   messages: ChatMessage[],
   maxOutputTokens: number,
+  diagnostics: ProviderDiagnostics,
 ) {
   const apiKey = getApiKey(config);
 
@@ -461,6 +559,7 @@ function streamProvider(
       includeUsage: true,
       maxTokensParameter: "max_completion_tokens",
       reasoningEffort: isOpenAiReasoningModel(model) ? "low" : undefined,
+      diagnostics,
     });
   }
 
@@ -471,6 +570,7 @@ function streamProvider(
       systemPrompt,
       messages,
       maxOutputTokens,
+      diagnostics,
     });
   }
 
@@ -481,6 +581,7 @@ function streamProvider(
       systemPrompt,
       messages,
       maxOutputTokens,
+      diagnostics,
     });
   }
 
@@ -493,6 +594,7 @@ function streamProvider(
       messages,
       maxOutputTokens: getDeepSeekMaxCompletionTokens(model, maxOutputTokens),
       includeUsage: true,
+      diagnostics,
     });
   }
 
@@ -503,6 +605,7 @@ function streamProvider(
     systemPrompt,
     messages,
     maxOutputTokens,
+    diagnostics,
   });
 }
 
@@ -754,6 +857,27 @@ export async function POST(request: Request) {
   ];
   const encoder = new TextEncoder();
   const startedAt = Date.now();
+  const diagnostics: ProviderDiagnostics = {
+    requestId: crypto.randomUUID(),
+    sseEvents: 0,
+    contentChunks: 0,
+    contentCharacters: 0,
+    usageEvents: 0,
+    finishReasons: [],
+  };
+
+  logProviderEvent("info", "request_started", {
+    requestId: diagnostics.requestId,
+    provider: config.aiProvider,
+    personaName: config.personaName,
+    model,
+    maxOutputTokens,
+    messageCount: conversationMessages.length,
+    estimatedInputTokens: estimateChatInputTokens(
+      systemPrompt,
+      conversationMessages,
+    ),
+  });
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -773,6 +897,7 @@ export async function POST(request: Request) {
           systemPrompt,
           conversationMessages,
           maxOutputTokens,
+          diagnostics,
         )) {
           if (chunk.type === "usage") {
             tokenUsage = {
@@ -798,6 +923,13 @@ export async function POST(request: Request) {
         }
 
         if (!reply.trim()) {
+          logProviderEvent("error", "empty_response", {
+            ...diagnostics,
+            provider: config.aiProvider,
+            personaName: config.personaName,
+            model,
+            durationMs: Date.now() - startedAt,
+          });
           throw new Error("The AI provider returned an empty response.");
         }
 
@@ -815,6 +947,17 @@ export async function POST(request: Request) {
           tokenUsage.inputTokens,
           tokenUsage.outputTokens,
         );
+
+        logProviderEvent("info", "request_completed", {
+          ...diagnostics,
+          provider: config.aiProvider,
+          personaName: config.personaName,
+          model,
+          durationMs,
+          inputTokens: tokenUsage.inputTokens,
+          outputTokens: tokenUsage.outputTokens,
+          tokenUsageEstimated: tokenUsage.estimated,
+        });
 
         await prisma.$transaction([
           prisma.message.createMany({
@@ -859,6 +1002,17 @@ export async function POST(request: Request) {
           encoder.encode(encodeStreamEvent("done", { providerName, credits })),
         );
       } catch (error) {
+        logProviderEvent("error", "request_failed", {
+          ...diagnostics,
+          provider: config.aiProvider,
+          personaName: config.personaName,
+          model,
+          durationMs: Date.now() - startedAt,
+          errorName: error instanceof Error ? error.name : typeof error,
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown provider error",
+          errorStack: error instanceof Error ? error.stack : undefined,
+        });
         controller.enqueue(
           encoder.encode(
             encodeStreamEvent("error", {
