@@ -255,6 +255,7 @@ async function* streamOpenAiCompatibleProvider(options: {
   includeUsage?: boolean;
   maxTokensParameter?: "max_tokens" | "max_completion_tokens";
   reasoningEffort?: "minimal" | "low" | "medium" | "high";
+  thinking?: { type: "disabled" };
   diagnostics: ProviderDiagnostics;
 }): AsyncGenerator<ProviderStreamChunk> {
   const maxTokensParameter = options.maxTokensParameter ?? "max_tokens";
@@ -274,6 +275,10 @@ async function* streamOpenAiCompatibleProvider(options: {
 
   if (options.reasoningEffort) {
     requestBody.reasoning_effort = options.reasoningEffort;
+  }
+
+  if (options.thinking) {
+    requestBody.thinking = options.thinking;
   }
 
   if (options.includeUsage) {
@@ -595,6 +600,7 @@ function streamProvider(
       messages,
       maxOutputTokens: getDeepSeekMaxCompletionTokens(model, maxOutputTokens),
       includeUsage: true,
+      thinking: { type: "disabled" },
       diagnostics,
     });
   }
