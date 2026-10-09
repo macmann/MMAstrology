@@ -111,3 +111,59 @@ input {
     @apply rounded-full border border-amber-200/20 bg-amber-100/10 px-3 py-2 text-xs font-black text-amber-100 shadow-sm;
   }
 }
+
+/* Readable Markdown inside the constrained, scrollable chat bubbles. */
+.chat-markdown {
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.chat-markdown > * + * { margin-top: 0.85rem; }
+.chat-markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 1.25rem;
+  font-weight: 800;
+  line-height: 1.6;
+  color: #fde68a;
+}
+.chat-markdown > :first-child { margin-top: 0; }
+.chat-markdown h1 { font-size: 1.25rem; }
+.chat-markdown h2 { font-size: 1.125rem; }
+.chat-markdown :is(h3, h4, h5, h6) { font-size: 1rem; }
+.chat-markdown :is(ul, ol) { padding-inline-start: 1.5rem; }
+.chat-markdown ul { list-style-type: disc; }
+.chat-markdown ol { list-style-type: decimal; }
+.chat-markdown li + li { margin-top: 0.4rem; }
+.chat-markdown li > :is(p, ul, ol) + * { margin-top: 0.4rem; }
+.chat-markdown strong { font-weight: 800; }
+.chat-markdown blockquote {
+  border-inline-start: 3px solid #fde68a80;
+  padding-inline-start: 0.85rem;
+  color: #ede9fed9;
+}
+.chat-markdown a {
+  color: #fde68a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.chat-markdown a:focus-visible { outline: 2px solid #fde68a; outline-offset: 3px; }
+.chat-markdown code {
+  border-radius: 0.35rem;
+  background: #00000040;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.85em;
+}
+.chat-markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  background: #00000040;
+  padding: 0.85rem;
+  line-height: 1.6;
+}
+.chat-markdown pre code { background: transparent; padding: 0; }
+.chat-markdown table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.chat-markdown :is(th, td) { padding: 0.5rem 0.75rem; border-bottom: 1px solid #ffffff26; }
+.chat-markdown th { background: #ffffff0d; font-weight: 800; }
+.chat-markdown tr:last-child td { border-bottom: 0; }
+.chat-markdown hr { margin-block: 1rem; border-color: #ffffff26; }
+.chat-markdown .contains-task-list { list-style: none; padding-inline-start: 0.25rem; }
+.chat-markdown input[type="checkbox"] { margin-inline-end: 0.5rem; accent-color: #fde68a; }
