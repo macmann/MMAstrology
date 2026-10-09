@@ -473,22 +473,24 @@ export function ChatInterface({
     <main className="cosmic-page">
       <div className="cosmic-shell flex flex-col">
         <header className="z-20 shrink-0 border-b border-white/10 bg-[#1a0f3d]/90 px-4 py-4 text-white shadow-xl shadow-fuchsia-950/30 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
             <Link
               href="/dashboard"
-              className="rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-200"
+              className="order-1 shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-sm font-black text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-200"
             >
               {t("chat.back")}
             </Link>
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${providerGradient} text-2xl shadow-xl`}>
-              {providerSymbol}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-lg font-black text-white">{providerDisplayName}</p>
-              <p className="truncate text-xs font-semibold text-violet-100/75">{providerTitle} · {providerSubtitle}</p>
+            <div className="order-3 flex w-full min-w-0 items-start gap-3 sm:order-2 sm:w-auto sm:flex-1 sm:items-center">
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${providerGradient} text-2xl shadow-xl`}>
+                {providerSymbol}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-lg font-black leading-relaxed text-white">{providerDisplayName}</p>
+                <p className="break-words text-xs font-semibold leading-relaxed text-violet-100/75">{providerTitle} · {providerSubtitle}</p>
+              </div>
             </div>
             {totalCredits !== null ? (
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-right">
+              <div className="order-2 ml-auto shrink-0 rounded-2xl border border-white/10 bg-white/10 px-3 py-2 text-right sm:order-3 sm:ml-0">
                 <p className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-amber-200">{t("chat.credits")}</p>
                 <p className="font-bold text-white">{totalCredits}</p>
               </div>
